@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>earth</title>
+    <script src="d3.min.js"></script>
+    <script src="d3-v6-tip.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <link rel="stylesheet" href="d3-tip.css">
+</head>
+
+<body>
+    <svg id="globe" width="500" height="500"></svg>
+    <script>
+        const svg = d3.select('#globe');
+        const width = +svg.attr('width');
+        const height = +svg.attr('height');
+
+        const projection = d3.geoOrthographic()
+            .scale(200)
+            .translate([width / 2, height / 2])
+            .clipAngle(90);
+
+        const path = d3.geoPath().projection(projection);
+
+        let drag = d3.drag()
+            .on('drag', function(event) {
+                let rotate = projection.rotate();
+                let k = 30 / projection.scale();
+                projection.rotate([
+                    rotate[0] + event.dx * k,
+                    rotate[1] - event.dy * k
+                ]);
+                svg.selectAll('path').attr('d', path);
+            });
+
+        svg.call(drag);
+
+        d3.json('https://unpkg.com/world-atlas@1/world/110m.json').then(world => {
+            svg.append('path')
+                .datum(topojson.feature(world, world.objects.land))
+                .attr('d', path)
+                .attr('fill', '#008000');
+
+            svg.append('path')
+                .datum(topojson.mesh(world, world.objects.countries, (a, b) => a !== b))
+                .attr('d', path)
+                .attr('fill', 'none')
+                .attr('stroke', '#000');
+
+            // d3.timer(function(elapsed) {
+            //     projection.rotate([elapsed / 200, 0]);
+            //     svg.selectAll('path').attr('d', path);
+            // });
+        });
+    </script>
+</body>
+
+</html>
