@@ -8,6 +8,16 @@
 </head>
 
 <body>
+    <style>
+    #toggleDragMode {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 10px 20px;
+    }
+    </style>
+    <button id="toggleDragMode">Toggle Drag Mode</button>
     <script>
     (function() {
         var width = 1200, height = 1200;
@@ -16,16 +26,27 @@
 
         var rotation = [0, 0];
         var scale = 1.0;
+        var dragMode = false;
+
+        document.getElementById('toggleDragMode').addEventListener('click', function() {
+            dragMode = !dragMode;
+            document.body.style.cursor = dragMode ? 'grab' : 'auto';
+        });
 
         var drag = d3.drag()
             .on('drag', function(event) {
+                if (!dragMode) {
+                    return;
+                }
+
                 var dx = event.dx / width * 60,
                     dy = event.dy / height * 60;
                 rotation[0] += dx;
                 rotation[1] += dy;
                 draw();
             });
-
+        
+        canvas.call(drag);
         canvas.call(drag);
 
         canvas.on('wheel', function(event) {
