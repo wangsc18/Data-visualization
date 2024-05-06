@@ -32,42 +32,68 @@
             const yScale = d3.scaleLinear()
                 .domain(d3.extent(data, d => d.y))
                 .range([margin.top, 960 - margin.bottom]);
-        
-            // 创建颜色比例尺
-            const colorScale = d3.scaleSequential()
-                .domain(d3.extent(data, d => Math.sqrt(d.x * d.x + d.y * d.y)))
-                .interpolator(d3.interpolateViridis);
-        
-            // 计算颜色差异的函数
-            function colorDifference(color1, color2) {
-                let c1 = d3.color(color1);
-                let c2 = d3.color(color2);
-                return Math.abs(c1.r - c2.r) + Math.abs(c1.g - c2.g) + Math.abs(c1.b - c2.b);
-            }
+                
+        // 创建四个参考点
+        let referencePoints = [
+            {x: 600, y: 600, color: "red"},
+            {x: 500, y: 20, color: "green"},
+            {x: 150, y: 150, color: "blue"},
+            {x: 350, y: 400, color: "yellow"}
+        ];
 
-            // 创建点
-            svg.selectAll("circle")
-                .data(data)
-                .enter()
-                .append("circle")
-                .attr("cx", d => xScale(d.x))
-                .attr("cy", d => yScale(d.y))
-                .attr("r", 5)
-                .attr("fill", d => colorScale(Math.sqrt(d.x * d.x + d.y * d.y)))
-                .on("click", function(event, d) {
-                    let clickedColor = d3.select(this).attr("fill");
-                    svg.selectAll("circle")
-                        .transition()
-                        .duration(500)
-                        .style("fill", function(d) {
-                            let thisColor = d3.select(this).attr("fill");
-                            if (colorDifference(clickedColor, thisColor) < 50) {
-                                return d3.rgb(thisColor).brighter(2);
-                            } else {
-                                return d3.rgb(thisColor).darker(2);
-                            }
-                        });
-                });
+        // 计算两点之间的距离
+        function distance(point1, point2) {
+            let dx = point1.x - point2.x;
+            let dy = point1.y - point2.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // 计算颜色的加权平均值
+        function weightedAverageColor(point, referencePoints) {
+            let totalWeight = 0;
+            let totalColor = [0, 0, 0];
+            for (let referencePoint of referencePoints) {
+                let weight = 1 / distance(point, referencePoint);
+                totalWeight += weight;
+                let color = d3.rgb(referencePoint.color);
+                totalColor[0] += color.r * weight;
+                totalColor[1] += color.g * weight;
+                totalColor[2] += color.b * weight;
+            }
+            return d3.rgb(totalColor[0] / totalWeight, totalColor[1] / totalWeight, totalColor[2] / totalWeight);
+        }
+
+        // 计算颜色差异的函数
+        function colorDifference(color1, color2) {
+            let c1 = d3.color(color1);
+            let c2 = d3.color(color2);
+            return Math.abs(c1.r - c2.r) + Math.abs(c1.g - c2.g) + Math.abs(c1.b - c2.b);
+        }
+
+        // 创建点
+        svg.selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("cx", d => xScale(d.x))
+            .attr("cy", d => yScale(d.y))
+            .attr("r", 5)
+            .attr("fill", d => weightedAverageColor(d, referencePoints))
+            .on("click", function(event, d) {
+                let clickedColor = d3.select(this).attr("fill");
+                svg.selectAll("circle")
+                    .transition()
+                    .duration(500)
+                    .style("fill", function(d) {
+                        let thisColor = d3.select(this).attr("fill");
+                        if (colorDifference(clickedColor, thisColor) < 50) { // 将阈值从100减小到50
+                            return d3.rgb(thisColor).brighter(2);
+                        } else {
+                            return d3.rgb(thisColor).darker(2);
+                        }
+                    });
+            });
+
         });
         </script>
 </body>
