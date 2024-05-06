@@ -1,6 +1,7 @@
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.manifold import MDS
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 
@@ -23,6 +24,10 @@ labels, emotion = pd.factorize(df.idxmax(axis=1))
 # 使用t-SNE进行降维
 tsne = TSNE(n_components=3)
 df_tsne = tsne.fit_transform(df)
+
+# 使用mds进行降维
+# mds = MDS(n_components=3)
+# df_mds = mds.fit_transform(df)
 
 # 创建归一化器并将数据缩放到[-1, 1]
 scaler = MinMaxScaler(feature_range=(-1, 1))
