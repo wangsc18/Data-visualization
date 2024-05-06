@@ -8,6 +8,16 @@
 </head>
 
 <body>
+    <style>
+    #toggleDragMode {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 10px 20px;
+    }
+    </style>
+    <button id="toggleDragMode">Toggle Drag Mode</button>
     <script>
     (function() {
         var width = 1200, height = 1200;
@@ -16,34 +26,53 @@
 
         var rotation = [0, 0];
         var scale = 1.0;
+        var dragMode = false;
+
+        var scatter_alpha = 0.5;
+        var sphere_alpha = 0.5;
+
+        document.getElementById('toggleDragMode').addEventListener('click', function() {
+            dragMode = !dragMode;
+            document.body.style.cursor = dragMode ? 'grab' : 'auto';
+        });
 
         var drag = d3.drag()
             .on('drag', function(event) {
+                if (!dragMode) {
+                    return;
+                }
+
                 var dx = event.dx / width * 60,
                     dy = event.dy / height * 60;
                 rotation[0] += dx;
                 rotation[1] += dy;
                 draw();
             });
-
+        
+        canvas.call(drag);
         canvas.call(drag);
 
         canvas.on('wheel', function(event) {
             // 更新缩放因子
             scale += event.deltaY * -0.001;
             scale = Math.min(Math.max(.125, scale), 4);
+
+            sphere_alpha = Math.max(0.0, Math.min(1.0, sphere_alpha + event.deltaY * 0.001));
+            scatter_alpha = 1.0 - sphere_alpha;
+
             draw();
         });
 
         var vertexShaderSource = `
             attribute vec3 position;
             attribute vec3 color;
+            attribute float size;
             varying vec3 vColor;
             uniform mat4 rotationMatrix;
             uniform float scale;
             void main() {
                 gl_Position = rotationMatrix * vec4(scale * position, 1.0);
-                gl_PointSize = 8.0;
+                gl_PointSize = size * scale;
                 vColor = color;
             }
         `;
@@ -51,14 +80,15 @@
         var fragmentShaderSource = `
             precision mediump float;
             varying vec3 vColor;
+            uniform float uAlpha;
             void main() {
-                float r = 0.0, delta = 0.0, alpha = 1.0;
+                float r = 0.0, delta = 0.0;
                 vec2 cxy = 2.0 * gl_PointCoord - 1.0;
                 r = dot(cxy, cxy);
                 if (r > 1.0) {
                     discard;
                 }
-                gl_FragColor = vec4(vColor, alpha);
+                gl_FragColor = vec4(vColor, uAlpha);
             }
         `;
 
@@ -94,37 +124,125 @@
 
         var positionLocation = gl.getAttribLocation(program, 'position');
         var colorLocation = gl.getAttribLocation(program, 'color');
+        var sizeLocation = gl.getAttribLocation(program, 'size');
         var rotationMatrixLocation = gl.getUniformLocation(program, 'rotationMatrix');
+        var alphaLocation = gl.getUniformLocation(program, 'uAlpha');
 
-        var positionBuffer = gl.createBuffer();
-        var colorBuffer = gl.createBuffer();
+        var scatter_positionBuffer = gl.createBuffer();
+        var scatter_colorBuffer = gl.createBuffer();
+        var scatter_sizeBuffer = gl.createBuffer();
 
-        var positions, colors;
+        var sphere_positionBuffer = gl.createBuffer();
+        var sphere_colorBuffer = gl.createBuffer();
+        var sphere_sizeBuffer = gl.createBuffer();
 
-        d3.csv('pca_data.csv').then(function(data) {
+        var scatter_positions, scatter_colors, scatter_sizes, sphere_positions, sphere_colors, sphere_sizes;
+        
+        Promise.all([
+            d3.csv('tsne_data.csv'),
+            d3.csv('tsne_centers.csv')
+        ]).then(function([scatterData, sphereData]) {
             var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-
-            positions = new Float32Array(data.length * 3);
-            colors = new Float32Array(data.length * 3);
-            data.forEach(function(d, i) {
-                positions[i * 3] = +d['Dimension 1'];
-                positions[i * 3 + 1] = +d['Dimension 2'];
-                positions[i * 3 + 2] = +d['Dimension 3'];
+            // 处理散点数据
+            scatter_positions = new Float32Array(scatterData.length * 3);
+            scatter_colors = new Float32Array(scatterData.length * 3);
+            scatter_sizes = new Float32Array(scatterData.length);
+            scatterData.forEach(function(d, i) {
+                scatter_positions[i * 3] = +d['Dimension 1'];
+                scatter_positions[i * 3 + 1] = +d['Dimension 2'];
+                scatter_positions[i * 3 + 2] = +d['Dimension 3'];
 
                 var color = d3.rgb(colorScale(d.Label));
-                colors[i * 3] = color.r / 255;
-                colors[i * 3 + 1] = color.g / 255;
-                colors[i * 3 + 2] = color.b / 255;
+                scatter_colors[i * 3] = color.r / 255;
+                scatter_colors[i * 3 + 1] = color.g / 255;
+                scatter_colors[i * 3 + 2] = color.b / 255;
             });
 
-            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, scatter_positions, gl.STATIC_DRAW);
 
-            gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_colorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, scatter_colors, gl.STATIC_DRAW);
 
+            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_sizeBuffer);
+            scatter_sizes.fill(5.0);  // 假设所有散点的大小都是 5.0
+            gl.bufferData(gl.ARRAY_BUFFER, scatter_sizes, gl.STATIC_DRAW);
+
+            // 处理球体数据
+            sphere_positions = new Float32Array(sphereData.length * 3);
+            sphere_colors = new Float32Array(sphereData.length * 3);
+            sphere_sizes = new Float32Array(sphereData.length);
+            sphereData.forEach(function(d, i) {
+                sphere_positions[i * 3] = +d['Dimension 1'];
+                sphere_positions[i * 3 + 1] = +d['Dimension 2'];
+                sphere_positions[i * 3 + 2] = +d['Dimension 3'];
+
+                sphere_sizes[i] = +d['Size'];
+
+                var color = d3.rgb(colorScale(d.Label));
+                sphere_colors[i * 3] = color.r / 255;
+                sphere_colors[i * 3 + 1] = color.g / 255;
+                sphere_colors[i * 3 + 2] = color.b / 255;
+            });
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, sphere_positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, sphere_positions, gl.STATIC_DRAW);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, sphere_colorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, sphere_colors, gl.STATIC_DRAW);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, sphere_sizeBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, sphere_sizes, gl.STATIC_DRAW);
+
+            // 绘制
             draw();
         });
+        // d3.csv('tsne_data.csv').then(function(data) {
+        //     var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+        //     positions = new Float32Array(data.length * 3);
+        //     colors = new Float32Array(data.length * 3);
+        //     data.forEach(function(d, i) {
+        //         positions[i * 3] = +d['Dimension 1'];
+        //         positions[i * 3 + 1] = +d['Dimension 2'];
+        //         positions[i * 3 + 2] = +d['Dimension 3'];
+
+        //         var color = d3.rgb(colorScale(d.Label));
+        //         colors[i * 3] = color.r / 255;
+        //         colors[i * 3 + 1] = color.g / 255;
+        //         colors[i * 3 + 2] = color.b / 255;
+        //     });
+
+        //     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        //     gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+        //     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        //     gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+
+        //     draw();
+        // });
+
+        // d3.csv('tsne_centers.csv').then(function(data) {
+        //     var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+        //     var centers = new Float32Array(data.length * 3);
+        //     var sizes = new Float32Array(data.length);
+        //     var colors = new Float32Array(data.length * 3);
+        //     data.forEach(function(d, i) {
+        //         centers[i * 3] = +d['Dimension 1'];
+        //         centers[i * 3 + 1] = +d['Dimension 2'];
+        //         centers[i * 3 + 2] = +d['Dimension 3'];
+
+        //         sizes[i] = +d['Size'];
+
+        //         var color = d3.rgb(colorScale(d.Label));
+        //         colors[i * 3] = color.r / 255;
+        //         colors[i * 3 + 1] = color.g / 255;
+        //         colors[i * 3 + 2] = color.b / 255;
+        //     });
+
+        //     // 在这里添加绘制球体的代码
+        // });
 
         function draw() {
             var cosTheta = Math.cos(rotation[0] / 180 * Math.PI);
@@ -138,22 +256,48 @@
                 -cosPhi * sinTheta, sinPhi, cosPhi * cosTheta, 0,
                 0, 0, 0, 1
             ]);
-
+            
             gl.uniformMatrix4fv(rotationMatrixLocation, false, rotationMatrix);
             gl.uniform1f(gl.getUniformLocation(program, 'scale'), scale);
 
             gl.clearColor(0.0, 0.0, 0.0, 1.0);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+            // 设置适当的混合模式以实现半透明效果
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+            // 绘制球体
+            gl.uniform1f(alphaLocation, sphere_alpha);
             gl.enableVertexAttribArray(positionLocation);
-            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.bindBuffer(gl.ARRAY_BUFFER, sphere_positionBuffer);
             gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
 
             gl.enableVertexAttribArray(colorLocation);
-            gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+            gl.bindBuffer(gl.ARRAY_BUFFER, sphere_colorBuffer);
             gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
 
-            gl.drawArrays(gl.POINTS, 0, positions.length / 3);
+            gl.enableVertexAttribArray(sizeLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, sphere_sizeBuffer);
+            gl.vertexAttribPointer(sizeLocation, 1, gl.FLOAT, false, 0, 0);
+
+            gl.drawArrays(gl.POINTS, 0, sphere_positions.length / 3);
+
+            // 绘制散点
+            gl.uniform1f(alphaLocation, scatter_alpha);
+            gl.enableVertexAttribArray(positionLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_positionBuffer);
+            gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(colorLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_colorBuffer);
+            gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(sizeLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_sizeBuffer);
+            gl.vertexAttribPointer(sizeLocation, 1, gl.FLOAT, false, 0, 0);
+
+            gl.drawArrays(gl.POINTS, 0, scatter_positions.length / 3);
         }
     })();
     </script>
