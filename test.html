@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>pca</title>
+    <script src="d3.min.js"></script>
+    <script src="d3-v6-tip.js"></script>
+    <link rel="stylesheet" href="d3-tip.css">
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/density-clustering@1.0.1/dist/density-clustering.min.js"></script>
+    <script>
+        d3.csv("points.csv").then(data => {
+            // 将字符串数据转换为数字
+            data.forEach(d => {
+                d.x = isNaN(+d.x) ? 0 : +d.x;
+                d.y = isNaN(+d.y) ? 0 : +d.y;
+            });
+        
+            // 创建SVG元素
+            const svg = d3.select("body").append("svg")
+                .attr("width", 1080)
+                .attr("height", 960);
+        
+            // 定义边距
+            const margin = {top: 20, right: 20, bottom: 20, left: 20};
+        
+            // 创建比例尺
+            const xScale = d3.scaleLinear()
+                .domain(d3.extent(data, d => d.x))
+                .range([margin.left, 1080 - margin.right]);
+            const yScale = d3.scaleLinear()
+                .domain(d3.extent(data, d => d.y))
+                .range([margin.top, 960 - margin.bottom]);
+        
+            // 创建颜色比例尺
+            const colorScale = d3.scaleSequential()
+                .domain(d3.extent(data, d => Math.sqrt(d.x * d.x + d.y * d.y)))
+                .interpolator(d3.interpolateViridis);
+        
+            // 计算颜色差异的函数
+            function colorDifference(color1, color2) {
+                let c1 = d3.color(color1);
+                let c2 = d3.color(color2);
+                return Math.abs(c1.r - c2.r) + Math.abs(c1.g - c2.g) + Math.abs(c1.b - c2.b);
+            }
+
+            // 创建点
+            svg.selectAll("circle")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("cx", d => xScale(d.x))
+                .attr("cy", d => yScale(d.y))
+                .attr("r", 5)
+                .attr("fill", d => colorScale(Math.sqrt(d.x * d.x + d.y * d.y)))
+                .on("click", function(event, d) {
+                    let clickedColor = d3.select(this).attr("fill");
+                    svg.selectAll("circle")
+                        .transition()
+                        .duration(500)
+                        .style("fill", function(d) {
+                            let thisColor = d3.select(this).attr("fill");
+                            if (colorDifference(clickedColor, thisColor) < 50) {
+                                return d3.rgb(thisColor).brighter(2);
+                            } else {
+                                return d3.rgb(thisColor).darker(2);
+                            }
+                        });
+                });
+        });
+        </script>
+</body>
+
+</html>
