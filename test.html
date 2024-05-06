@@ -70,21 +70,6 @@
             return Math.abs(c1.r - c2.r) + Math.abs(c1.g - c2.g) + Math.abs(c1.b - c2.b);
         }
 
-<<<<<<< HEAD
-        // 在SVG元素上添加点击事件
-        svg.on("click", function(event, d) {
-            if (d3.select(event.target).node().tagName == "circle") {
-                return; // 如果点击的是点，那么不做任何事情
-            }
-            // 如果点击的不是点，那么恢复所有点的颜色
-            svg.selectAll("circle")
-                .transition()
-                .duration(500)
-                .style("fill", d => weightedAverageColor(d, referencePoints));
-        });
-
-=======
->>>>>>> 09f177c037124706093a0210748125cba7f4ac87
         // 创建点
         svg.selectAll("circle")
             .data(data)
@@ -101,20 +86,12 @@
                     .duration(500)
                     .style("fill", function(d) {
                         let thisColor = d3.select(this).attr("fill");
-<<<<<<< HEAD
-                        if (colorDifference(clickedColor, thisColor) < 50) {
-=======
                         if (colorDifference(clickedColor, thisColor) < 50) { // 将阈值从100减小到50
->>>>>>> 09f177c037124706093a0210748125cba7f4ac87
                             return d3.rgb(thisColor).brighter(2);
                         } else {
                             return d3.rgb(thisColor).darker(2);
                         }
                     });
-<<<<<<< HEAD
-                d3.event.stopPropagation(); // 阻止事件冒泡
-=======
->>>>>>> 09f177c037124706093a0210748125cba7f4ac87
             });
 
         });
