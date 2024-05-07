@@ -70,7 +70,6 @@
             return Math.abs(c1.r - c2.r) + Math.abs(c1.g - c2.g) + Math.abs(c1.b - c2.b);
         }
 
-        // 创建点
         svg.selectAll("circle")
             .data(data)
             .enter()
@@ -80,86 +79,150 @@
             .attr("selected", 0)
             .attr("r", 5)
             .attr("fill", d => weightedAverageColor(d, referencePoints))
-            .on("mousemove", function(event, d) {
-                let clickedColor = d3.select(this).attr("fill");
-                svg.selectAll("circle")
-                    .transition()
-                    .duration(500)
-                    .style("fill", function(d) {
-                        let thisColor = d3.select(this).attr("fill");
-                        let thisSelect = +d3.select(this).attr("selected");
-                        if (thisSelect === 0) {
-                            if (colorDifference(clickedColor, thisColor) < 50) { // 将阈值从100减小到50
-                                return d3.rgb(thisColor).brighter(2);
-                            } else {
-                                return d3.rgb(thisColor).darker(2);
-                            }
-                        }
 
-                    });
+        d3.select("body")
+            .append("button")
+            .text("Select by Sample")
+            .on("click", function() {
+                // 获取当前按钮的文本
+                let currentText = d3.select(this).text();
+                // 切换文本内容
+                if (currentText === "Select by Category") {
+                    d3.select(this).text("Select by Sample");
 
-                })
-            .on("click", function(event, d) {
-                let clickedColor = d3.select(this).attr("fill");
-                let clickedCircle = d3.select(this);
-                // 创建一个按钮并设置文本为被点击点的颜色
-                d3.select("body")
-                    .append("button")
-                    .style("background-color", clickedColor)
-                    .text("Clicked Color: " + clickedColor)
-                    .on("click", function() {
-                        // 当按钮被点击时，移除按钮并对相应的点进行操作
-                        d3.select(this).remove();
+                    // 创建点
+                    svg.selectAll("circle")
+                        .on("mouseover", null)
+                        .on("mouseout", null)
+                        .on("mousemove", function(event, d) {
+                            let clickedColor = d3.select(this).attr("fill");
+                            svg.selectAll("circle")
+                                .transition()
+                                .duration(500)
+                                .style("fill", function(d) {
+                                    let thisColor = d3.select(this).attr("fill");
+                                    let thisSelect = +d3.select(this).attr("selected");
+                                    if (thisSelect === 0) {
+                                        if (colorDifference(clickedColor, thisColor) < 50) { // 将阈值从100减小到50
+                                            return d3.rgb(thisColor).brighter(2);
+                                        } else {
+                                            return d3.rgb(thisColor).darker(2);
+                                        }
+                                    }
 
-                        // 修改被点击点的选中状态，并将其颜色变暗
-                        clickedCircle
-                            .attr("selected", +clickedCircle.attr("selected") - 1)
-                            .attr("fill", d3.rgb(clickedColor).darker(2));
+                                });
 
-                        // 对符合条件的其他点进行相应操作
-                        svg.selectAll("circle")
-                            .transition()
-                            .duration(500)
-                            .style("fill", function(d) {
-                                let thisColor = d3.select(this).attr("fill");
-                                let thisSelect = +d3.select(this).attr("selected");
-                                if (colorDifference(clickedColor, thisColor) < 50) { // 将阈值从100减小到50
-                                    d3.select(this).attr("selected", thisSelect-1)
-                                    if(thisSelect === 0){
-                                        d3.select(this).attr("fill", d3.rgb(thisColor).darker(2));
-                                        return d3.rgb(thisColor).darker(4);
-                                    }     
-                                } 
-                                let secondColor = d3.select(this).attr("fill");
-                                let secondselect= +d3.select(this).attr("selected");
-                                if(secondselect === 0){
-                                    return d3.rgb(secondColor).darker(2);
-                                }                                 
+                            })
+                        .on("click", function(event, d) {
+                            let clickedColor = d3.select(this).attr("fill");
+                            let clickedCircle = d3.select(this);
+                            // 创建一个按钮并设置文本为被点击点的颜色
+                            d3.select("body")
+                                .append("button")
+                                .style("background-color", d3.rgb(clickedColor).brighter(2))
+                                .text("Clicked Color: " + clickedColor)
+                                .on("click", function() {
+                                    // 当按钮被点击时，移除按钮并对相应的点进行操作
+                                    d3.select(this).remove();
+
+                                
+                                    // 对符合条件的其他点进行相应操作
+                                    svg.selectAll("circle")
+                                        .transition()
+                                        .duration(500)
+                                        .style("fill", function(d) {
+                                            let thisColor = d3.select(this).attr("fill");
+                                            let thisSelect = +d3.select(this).attr("selected");
+                                            if (colorDifference(clickedColor, d3.rgb(thisColor).darker(2)) < 50 && thisSelect>0) { // 将阈值从100减小到50
+                                                d3.select(this).attr("selected", function(d) { return +d3.select(this).attr("selected") - 1; })
+                                                if(thisSelect === 1){
+                                                    d3.select(this).attr("fill", function(d) { return d3.rgb(thisColor).darker(2); })          
+                                                    return d3.rgb(thisColor).darker(2)                  
+                                                }     
+                                            } 
+                                            let secondColor = d3.select(this).attr("fill");
+                                            let secondselect= +d3.select(this).attr("selected");
+                                            if(secondselect === 0){
+                                                return d3.rgb(secondColor).darker(2);
+                                            }                                 
+                                        });
+
+                                });
+
+
+                            svg.selectAll("circle")
+                                .transition()
+                                .duration(500)
+                                .style("fill", function(d) {
+                                    let thisColor = d3.select(this).attr("fill");
+                                    let thisSelect = +d3.select(this).attr("selected");
+                                    if (colorDifference(clickedColor, thisColor) < 50) { // 将阈值从100减小到50
+                                        d3.select(this).attr("selected", thisSelect+1)
+                                        if(thisSelect === 0){
+                                            d3.select(this).attr("fill", d3.rgb(thisColor).brighter(2));
+                                        }     
+                                    } 
+                                    else {
+                                        if(thisSelect === 0){
+                                            return d3.rgb(thisColor).darker(2);
+                                        } 
+                                    }
+                                });
+
                             });
 
-                    });
 
+                } 
+                else {
+                    d3.select(this).text("Select by Category");
+                    svg.selectAll("circle")
+                        .on("click", null)
+                        .on("mousemove", null)
+                        .on("mouseover", function(event, d) {
+                            // 选择当前的点
+                            
+                            var currentCircle = d3.select(this); 
+                            let clickedColor = d3.select(this).attr("fill");                               
+                            var clickedx = d3.select(this).attr("cx");                               
+                            var clickedy = d3.select(this).attr("cy");                               
+                            d3.select(this).attr("r", function(d) { return 8; })
+                            // 创建一个文本元素
+                            var text = svg.append("text")
+                                .text("Clicked Color: " + clickedColor) // 设置文本内容为点的标签
+                                .attr("x", function(d) { return clickedx; })
+                                .attr("y", function(d) { return clickedy; })
+                                .attr("text-anchor", "middle") // 文本对齐方式
+                                .attr("dy", "1em"); // 文本垂直对齐方式
+                            
+                        })
+                        .on("mouseout", function(event, d) {
+                            // 清除之前显示的文本
+                            d3.select(this).attr("r", function(d) { return 5; })
+                            
+                            d3.select("text").remove();
+                        })
+                        .on("click", function(event, d) {
+                            d3.select(this).attr("r", function(d) { return 8; })
+                            let clickedColor = d3.select(this).attr("fill");
+                            let clickedCircle = d3.select(this);
+                            // 创建一个按钮并设置文本为被点击点的颜色
+                            d3.select("body")
+                                .append("button")
+                                .style("background-color", d3.rgb(clickedColor).brighter(2))
+                                .text("Clicked Color: " + clickedColor)
+                                .on("click", function() {
+                                    // 当按钮被点击时，移除按钮并对相应的点进行操作
+                                    d3.select(this).remove();
+                                    clickedCircle.attr("r", function(d) { return 5; })
 
-                svg.selectAll("circle")
-                    .transition()
-                    .duration(500)
-                    .style("fill", function(d) {
-                        let thisColor = d3.select(this).attr("fill");
-                        let thisSelect = +d3.select(this).attr("selected");
-                        if (colorDifference(clickedColor, thisColor) < 50) { // 将阈值从100减小到50
-                            d3.select(this).attr("selected", thisSelect+1)
-                            if(thisSelect === 0){
-                                d3.select(this).attr("fill", d3.rgb(thisColor).brighter(2));
-                            }     
-                        } 
-                        else {
-                            if(thisSelect === 0){
-                                return d3.rgb(thisColor).darker(2);
-                            } 
-                        }
-                    });
+                                });
 
-                });
+                            });
+                        ;
+
+                }
+            });
+
                 
         });
         </script>
