@@ -86,7 +86,7 @@
             // console.log("ReadPixels coordinates: ", x, y);
             // console.log('Selected color: ' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2]);
 
-            // 查找与该颜色对应的球体
+            // 查找与该颜色对应的球体，这个index跟csv文件中的Label是对应的
             var index = Math.round(pixels[0] * (sphere_positions.length / 3) / 255);
             console.log('Selected sphere index: ' + index);
             console.log('Selected sphere emotion: ' + sphere_emotion[index]);
@@ -182,8 +182,11 @@
         // 每个渲染单元都有位置、颜色和大小属性
         var scatter_positions, scatter_colors, scatter_sizes, sphere_positions, sphere_colors, sphere_sizes, sphere_emotion, pickColors;
 
-        //更新的球体大小和颜色
-        var update_sphere_sizes, update_sphere_colors;
+        // 更新的球体和散点大小和颜色
+        var update_sphere_sizes, update_sphere_colors, update_scatter_sizes, update_scatter_colors;
+
+        // 每个球体对应的散点组
+        var scatter_groups;
         
         var pickColorBuffer = gl.createBuffer();
 
@@ -211,31 +214,6 @@
             d3.csv('tsne_centers.csv')
         ]).then(function([scatterData, sphereData]) {
             var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-            // 处理散点数据
-            scatter_positions = new Float32Array(scatterData.length * 3);
-            scatter_colors = new Float32Array(scatterData.length * 3);
-            scatter_sizes = new Float32Array(scatterData.length);
-            scatterData.forEach(function(d, i) {
-                scatter_positions[i * 3] = +d['Dimension 1'];
-                scatter_positions[i * 3 + 1] = +d['Dimension 2'];
-                scatter_positions[i * 3 + 2] = +d['Dimension 3'];
-
-                var color = d3.rgb(colorScale(d.Label));
-                scatter_colors[i * 3] = color.r / 255;
-                scatter_colors[i * 3 + 1] = color.g / 255;
-                scatter_colors[i * 3 + 2] = color.b / 255;
-            });
-
-            // 将数据绑定到缓冲区
-            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_positionBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, scatter_positions, gl.STATIC_DRAW);
-
-            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_colorBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, scatter_colors, gl.STATIC_DRAW);
-
-            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_sizeBuffer);
-            scatter_sizes.fill(5.0);  // 假设所有散点的大小都是 5.0
-            gl.bufferData(gl.ARRAY_BUFFER, scatter_sizes, gl.STATIC_DRAW);
 
             // 处理球体数据
             sphere_positions = new Float32Array(sphereData.length * 3);
@@ -244,6 +222,7 @@
             update_sphere_sizes = new Float32Array(sphereData.length);
             update_sphere_colors = new Float32Array(sphereData.length);
             sphere_emotion = new Array(sphereData.length);
+            scatter_groups = new Array(sphereData.length);
             sphereData.forEach(function(d, i) {
                 sphere_positions[i * 3] = +d['Dimension 1'];
                 sphere_positions[i * 3 + 1] = +d['Dimension 2'];
@@ -251,8 +230,8 @@
 
                 // 球体的大小由组内数量决定
                 sphere_sizes[i] = +d['Size'];
-
                 sphere_emotion[i] = d['Emotion'];
+                scatter_groups[i] = [];
 
                 var color = d3.rgb(colorScale(d.Label));
                 sphere_colors[i * 3] = color.r / 255;
@@ -284,6 +263,38 @@
             // 颜色缓冲区
             gl.bindBuffer(gl.ARRAY_BUFFER, pickColorBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, pickColors, gl.STATIC_DRAW);
+            
+            // 处理散点数据
+            scatter_positions = new Float32Array(scatterData.length * 3);
+            scatter_colors = new Float32Array(scatterData.length * 3);
+            scatter_sizes = new Float32Array(scatterData.length);
+            scatterData.forEach(function(d, i) {
+                scatter_positions[i * 3] = +d['Dimension 1'];
+                scatter_positions[i * 3 + 1] = +d['Dimension 2'];
+                scatter_positions[i * 3 + 2] = +d['Dimension 3'];
+
+                var color = d3.rgb(colorScale(d.Label));
+                scatter_colors[i * 3] = color.r / 255;
+                scatter_colors[i * 3 + 1] = color.g / 255;
+                scatter_colors[i * 3 + 2] = color.b / 255;
+
+                scatter_groups[d['Label']].push(i);
+            });
+            scatter_sizes.fill(5.0);  // 假设所有散点的大小都是 5.0
+            update_scatter_colors = scatter_colors.slice();
+            update_scatter_sizes = scatter_sizes.slice();
+
+            // 将数据绑定到缓冲区
+            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, scatter_positions, gl.STATIC_DRAW);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_colorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, update_scatter_colors, gl.STATIC_DRAW);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, scatter_sizeBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, update_scatter_sizes, gl.STATIC_DRAW);
+
+            console.log(scatter_groups);
 
             // 绘制
             draw();
@@ -346,16 +357,31 @@
             for (var i = 0; i < sphere_positions.length / 3; i++) {
                 if (selectedSpheres.indexOf(i) !== -1) {
                     // 如果球体被选中，则变大变亮
-                    update_sphere_sizes[i] = sphere_sizes[i] + 5;
+                    update_sphere_sizes[i] = sphere_sizes[i] + 10;
                     update_sphere_colors[i * 3] = Math.min(1.0, sphere_colors[i * 3] + 0.5);  // 增加红色分量
                     update_sphere_colors[i * 3 + 1] = Math.min(1.0, sphere_colors[i * 3 + 1] + 0.5);  // 增加绿色分量
                     update_sphere_colors[i * 3 + 2] = Math.min(1.0, sphere_colors[i * 3 + 2] + 0.5);  // 增加蓝色分量
+
+                    // 对应的散点也变大变亮
+                    scatter_groups[i].forEach(function(j) {
+                        update_scatter_sizes[j] = scatter_sizes[j] + 2;
+                        update_scatter_colors[j * 3] = Math.min(1.0, scatter_colors[j * 3] + 0.5);
+                        update_scatter_colors[j * 3 + 1] = Math.min(1.0, scatter_colors[j * 3 + 1] + 0.5);
+                        update_scatter_colors[j * 3 + 2] = Math.min(1.0, scatter_colors[j * 3 + 2] + 0.5);
+                    });
                     // console.log(sphere_sizes[i], update_sphere_sizes[i]);
                 } else {
                     update_sphere_sizes[i] = sphere_sizes[i];
                     update_sphere_colors[i * 3] = sphere_colors[i * 3];
                     update_sphere_colors[i * 3 + 1] = sphere_colors[i * 3 + 1];
                     update_sphere_colors[i * 3 + 2] = sphere_colors[i * 3 + 2];
+
+                    scatter_groups[i].forEach(function(j) {
+                        update_scatter_sizes[j] = scatter_sizes[j];
+                        update_scatter_colors[j * 3] = scatter_colors[j * 3];
+                        update_scatter_colors[j * 3 + 1] = scatter_colors[j * 3 + 1];
+                        update_scatter_colors[j * 3 + 2] = scatter_colors[j * 3 + 2];
+                    });
                 }
             }
 
@@ -383,10 +409,12 @@
 
             gl.enableVertexAttribArray(colorLocation);
             gl.bindBuffer(gl.ARRAY_BUFFER, scatter_colorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, update_scatter_colors, gl.STATIC_DRAW);
             gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
 
             gl.enableVertexAttribArray(sizeLocation);
             gl.bindBuffer(gl.ARRAY_BUFFER, scatter_sizeBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, update_scatter_sizes, gl.STATIC_DRAW);
             gl.vertexAttribPointer(sizeLocation, 1, gl.FLOAT, false, 0, 0);
 
             gl.drawArrays(gl.POINTS, 0, scatter_positions.length / 3);
