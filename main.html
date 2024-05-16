@@ -15,9 +15,11 @@
         left: 50%;
         transform: translate(-50%, -50%);
         padding: 10px 20px;
+        z-index: 1000;
     }
     </style>
     <button id="toggleDragMode">Toggle Drag Mode</button>
+    <div id="canvasContainer"></div>
     <script>
     (function() {
         var width = 1200, height = 1200;
@@ -61,6 +63,28 @@
             scatter_alpha = 1.0 - sphere_alpha;
 
             draw();
+        });
+
+        canvas.node().addEventListener('click', function(e) {
+            if (dragMode) {
+                // 如果dragMode为true，不执行选中球体的代码
+                return;
+            }
+
+            var rect = canvas.node().getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = rect.bottom - e.clientY;
+            var pixels = new Uint8Array(4);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, pickFramebuffer);
+            gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+            console.log("ReadPixels coordinates: ", x, y);
+
+            console.log('Selected color: ' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2]);
+
+            // 查找与该颜色对应的球体
+            var index = Math.round(pixels[0] * (sphere_positions.length / 3));
+            console.log('Selected sphere index: ' + index);
         });
 
         var vertexShaderSource = `
@@ -136,7 +160,27 @@
         var sphere_colorBuffer = gl.createBuffer();
         var sphere_sizeBuffer = gl.createBuffer();
 
-        var scatter_positions, scatter_colors, scatter_sizes, sphere_positions, sphere_colors, sphere_sizes;
+        var scatter_positions, scatter_colors, scatter_sizes, sphere_positions, sphere_colors, sphere_sizes, pickColors;
+        
+        var pickColorBuffer = gl.createBuffer();
+
+        // 用于拾取的帧缓冲区和纹理
+        var pickFramebuffer = gl.createFramebuffer();
+        var pickTexture = gl.createTexture();
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, pickFramebuffer);
+        gl.bindTexture(gl.TEXTURE_2D, pickTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, pickTexture, 0);
+
+        // 检查帧缓冲区是否完整
+        var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+        if (status != gl.FRAMEBUFFER_COMPLETE) {
+            console.error('Framebuffer is not complete: ' + status);
+        }
+
+        // 切换回默认的帧缓冲区
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         
         Promise.all([
             d3.csv('tsne_data.csv'),
@@ -185,6 +229,15 @@
                 sphere_colors[i * 3 + 2] = color.b / 255;
             });
 
+            // 为每个球体分配一个唯一的颜色
+            pickColors = new Float32Array(sphere_positions.length);
+            for (var i = 0; i < sphere_positions.length / 3; i++) {
+                pickColors[i * 3] = i / (sphere_positions.length / 3);
+                pickColors[i * 3 + 1] = i / (sphere_positions.length / 3);
+                pickColors[i * 3 + 2] = i / (sphere_positions.length / 3);
+                // console.log(pickColors[i * 3], pickColors[i * 3 + 1], pickColors[i * 3 + 2]);
+            }
+
             gl.bindBuffer(gl.ARRAY_BUFFER, sphere_positionBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, sphere_positions, gl.STATIC_DRAW);
 
@@ -194,55 +247,13 @@
             gl.bindBuffer(gl.ARRAY_BUFFER, sphere_sizeBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, sphere_sizes, gl.STATIC_DRAW);
 
+            // 颜色缓冲区
+            gl.bindBuffer(gl.ARRAY_BUFFER, pickColorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, sphere_colors, gl.STATIC_DRAW);
+
             // 绘制
             draw();
         });
-        // d3.csv('tsne_data.csv').then(function(data) {
-        //     var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-
-        //     positions = new Float32Array(data.length * 3);
-        //     colors = new Float32Array(data.length * 3);
-        //     data.forEach(function(d, i) {
-        //         positions[i * 3] = +d['Dimension 1'];
-        //         positions[i * 3 + 1] = +d['Dimension 2'];
-        //         positions[i * 3 + 2] = +d['Dimension 3'];
-
-        //         var color = d3.rgb(colorScale(d.Label));
-        //         colors[i * 3] = color.r / 255;
-        //         colors[i * 3 + 1] = color.g / 255;
-        //         colors[i * 3 + 2] = color.b / 255;
-        //     });
-
-        //     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        //     gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-
-        //     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-        //     gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-
-        //     draw();
-        // });
-
-        // d3.csv('tsne_centers.csv').then(function(data) {
-        //     var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-
-        //     var centers = new Float32Array(data.length * 3);
-        //     var sizes = new Float32Array(data.length);
-        //     var colors = new Float32Array(data.length * 3);
-        //     data.forEach(function(d, i) {
-        //         centers[i * 3] = +d['Dimension 1'];
-        //         centers[i * 3 + 1] = +d['Dimension 2'];
-        //         centers[i * 3 + 2] = +d['Dimension 3'];
-
-        //         sizes[i] = +d['Size'];
-
-        //         var color = d3.rgb(colorScale(d.Label));
-        //         colors[i * 3] = color.r / 255;
-        //         colors[i * 3 + 1] = color.g / 255;
-        //         colors[i * 3 + 2] = color.b / 255;
-        //     });
-
-        //     // 在这里添加绘制球体的代码
-        // });
 
         function draw() {
             var cosTheta = Math.cos(rotation[0] / 180 * Math.PI);
@@ -260,6 +271,28 @@
             gl.uniformMatrix4fv(rotationMatrixLocation, false, rotationMatrix);
             gl.uniform1f(gl.getUniformLocation(program, 'scale'), scale);
 
+            gl.disable(gl.BLEND);
+            
+            // 在隐藏的帧缓冲区中渲染场景
+            gl.bindFramebuffer(gl.FRAMEBUFFER, pickFramebuffer);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            gl.enableVertexAttribArray(positionLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, sphere_positionBuffer);
+            gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(colorLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, pickColorBuffer);
+            gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
+
+            gl.drawArrays(gl.POINTS, 0, sphere_positions.length / 3);
+            
+            // 切换回默认的帧缓冲区
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            // 在默认的帧缓冲区中渲染场景
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
             gl.clearColor(0.0, 0.0, 0.0, 1.0);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -269,6 +302,7 @@
 
             // 绘制球体
             gl.uniform1f(alphaLocation, sphere_alpha);
+
             gl.enableVertexAttribArray(positionLocation);
             gl.bindBuffer(gl.ARRAY_BUFFER, sphere_positionBuffer);
             gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
@@ -298,6 +332,8 @@
             gl.vertexAttribPointer(sizeLocation, 1, gl.FLOAT, false, 0, 0);
 
             gl.drawArrays(gl.POINTS, 0, scatter_positions.length / 3);
+            
+
         }
     })();
     </script>
