@@ -249,7 +249,7 @@
 
             // 颜色缓冲区
             gl.bindBuffer(gl.ARRAY_BUFFER, pickColorBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, sphere_colors, gl.STATIC_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, pickColors, gl.STATIC_DRAW);
 
             // 绘制
             draw();
@@ -273,7 +273,7 @@
 
             gl.disable(gl.BLEND);
             
-            // 在隐藏的帧缓冲区中渲染场景
+            // 在隐藏的帧缓冲区中渲染球体
             gl.bindFramebuffer(gl.FRAMEBUFFER, pickFramebuffer);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -284,6 +284,10 @@
             gl.enableVertexAttribArray(colorLocation);
             gl.bindBuffer(gl.ARRAY_BUFFER, pickColorBuffer);
             gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(sizeLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, sphere_sizeBuffer);
+            gl.vertexAttribPointer(sizeLocation, 1, gl.FLOAT, false, 0, 0);
 
             gl.drawArrays(gl.POINTS, 0, sphere_positions.length / 3);
             
