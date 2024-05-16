@@ -26,12 +26,17 @@
         var canvas = d3.select('body').append('canvas').attr('width', width).attr('height', height);
         var gl = canvas.node().getContext('webgl');
 
+        // 设置视口
         var rotation = [0, 0];
         var scale = 1.0;
         var dragMode = false;
 
+        // 设置透明度
         var scatter_alpha = 0.5;
         var sphere_alpha = 0.5;
+
+        // 选中的球体列表
+        var selectedSpheres = [];
 
         document.getElementById('toggleDragMode').addEventListener('click', function() {
             dragMode = !dragMode;
@@ -78,13 +83,26 @@
             gl.bindFramebuffer(gl.FRAMEBUFFER, pickFramebuffer);
             gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
-            console.log("ReadPixels coordinates: ", x, y);
-
-            console.log('Selected color: ' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2]);
+            // console.log("ReadPixels coordinates: ", x, y);
+            // console.log('Selected color: ' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2]);
 
             // 查找与该颜色对应的球体
-            var index = Math.round(pixels[0] * (sphere_positions.length / 3));
+            var index = Math.round(pixels[0] * (sphere_positions.length / 3) / 255);
             console.log('Selected sphere index: ' + index);
+            console.log('Selected sphere emotion: ' + sphere_emotion[index]);
+
+            var selectedIndex = selectedSpheres.indexOf(index);
+            if (selectedIndex === -1) {
+                // 如果该球体没有被选中，将其添加到数组中
+                selectedSpheres.push(index);
+            } else {
+                // 如果该球体已经被选中，从数组中移除它
+                selectedSpheres.splice(selectedIndex, 1);
+            }
+            console.log('Selected spheres: ' + selectedSpheres);
+
+            // 绘制
+            draw();
         });
 
         var vertexShaderSource = `
@@ -146,6 +164,7 @@
 
         gl.useProgram(program);
 
+        // 所有要设置的属性都是全局的，因此只需要设置一次
         var positionLocation = gl.getAttribLocation(program, 'position');
         var colorLocation = gl.getAttribLocation(program, 'color');
         var sizeLocation = gl.getAttribLocation(program, 'size');
@@ -160,11 +179,16 @@
         var sphere_colorBuffer = gl.createBuffer();
         var sphere_sizeBuffer = gl.createBuffer();
 
-        var scatter_positions, scatter_colors, scatter_sizes, sphere_positions, sphere_colors, sphere_sizes, pickColors;
+        // 每个渲染单元都有位置、颜色和大小属性
+        var scatter_positions, scatter_colors, scatter_sizes, sphere_positions, sphere_colors, sphere_sizes, sphere_emotion, pickColors;
+
+        //更新的球体大小和颜色
+        var update_sphere_sizes, update_sphere_colors;
         
         var pickColorBuffer = gl.createBuffer();
 
         // 用于拾取的帧缓冲区和纹理
+        // 隐藏帧缓冲区只用于球体的颜色拾取，不会被显示
         var pickFramebuffer = gl.createFramebuffer();
         var pickTexture = gl.createTexture();
 
@@ -202,6 +226,7 @@
                 scatter_colors[i * 3 + 2] = color.b / 255;
             });
 
+            // 将数据绑定到缓冲区
             gl.bindBuffer(gl.ARRAY_BUFFER, scatter_positionBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, scatter_positions, gl.STATIC_DRAW);
 
@@ -216,20 +241,28 @@
             sphere_positions = new Float32Array(sphereData.length * 3);
             sphere_colors = new Float32Array(sphereData.length * 3);
             sphere_sizes = new Float32Array(sphereData.length);
+            update_sphere_sizes = new Float32Array(sphereData.length);
+            update_sphere_colors = new Float32Array(sphereData.length);
+            sphere_emotion = new Array(sphereData.length);
             sphereData.forEach(function(d, i) {
                 sphere_positions[i * 3] = +d['Dimension 1'];
                 sphere_positions[i * 3 + 1] = +d['Dimension 2'];
                 sphere_positions[i * 3 + 2] = +d['Dimension 3'];
 
+                // 球体的大小由组内数量决定
                 sphere_sizes[i] = +d['Size'];
+
+                sphere_emotion[i] = d['Emotion'];
 
                 var color = d3.rgb(colorScale(d.Label));
                 sphere_colors[i * 3] = color.r / 255;
                 sphere_colors[i * 3 + 1] = color.g / 255;
                 sphere_colors[i * 3 + 2] = color.b / 255;
             });
+            update_sphere_sizes = sphere_sizes.slice();
+            update_sphere_colors = sphere_colors.slice();
 
-            // 为每个球体分配一个唯一的颜色
+            // 为每个球体分配一个唯一的用于拾取的颜色
             pickColors = new Float32Array(sphere_positions.length);
             for (var i = 0; i < sphere_positions.length / 3; i++) {
                 pickColors[i * 3] = i / (sphere_positions.length / 3);
@@ -238,14 +271,15 @@
                 // console.log(pickColors[i * 3], pickColors[i * 3 + 1], pickColors[i * 3 + 2]);
             }
 
+            // 将数据绑定到缓冲区
             gl.bindBuffer(gl.ARRAY_BUFFER, sphere_positionBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, sphere_positions, gl.STATIC_DRAW);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, sphere_colorBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, sphere_colors, gl.STATIC_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, update_sphere_colors, gl.STATIC_DRAW);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, sphere_sizeBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, sphere_sizes, gl.STATIC_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, update_sphere_sizes, gl.STATIC_DRAW);
 
             // 颜色缓冲区
             gl.bindBuffer(gl.ARRAY_BUFFER, pickColorBuffer);
@@ -256,6 +290,7 @@
         });
 
         function draw() {
+            // 设置视口和旋转矩阵
             var cosTheta = Math.cos(rotation[0] / 180 * Math.PI);
             var sinTheta = Math.sin(rotation[0] / 180 * Math.PI);
             var cosPhi = Math.cos(rotation[1] / 180 * Math.PI);
@@ -307,16 +342,35 @@
             // 绘制球体
             gl.uniform1f(alphaLocation, sphere_alpha);
 
+            // 判断球体是否被选中
+            for (var i = 0; i < sphere_positions.length / 3; i++) {
+                if (selectedSpheres.indexOf(i) !== -1) {
+                    // 如果球体被选中，则变大变亮
+                    update_sphere_sizes[i] = sphere_sizes[i] + 5;
+                    update_sphere_colors[i * 3] = Math.min(1.0, sphere_colors[i * 3] + 0.5);  // 增加红色分量
+                    update_sphere_colors[i * 3 + 1] = Math.min(1.0, sphere_colors[i * 3 + 1] + 0.5);  // 增加绿色分量
+                    update_sphere_colors[i * 3 + 2] = Math.min(1.0, sphere_colors[i * 3 + 2] + 0.5);  // 增加蓝色分量
+                    // console.log(sphere_sizes[i], update_sphere_sizes[i]);
+                } else {
+                    update_sphere_sizes[i] = sphere_sizes[i];
+                    update_sphere_colors[i * 3] = sphere_colors[i * 3];
+                    update_sphere_colors[i * 3 + 1] = sphere_colors[i * 3 + 1];
+                    update_sphere_colors[i * 3 + 2] = sphere_colors[i * 3 + 2];
+                }
+            }
+
             gl.enableVertexAttribArray(positionLocation);
             gl.bindBuffer(gl.ARRAY_BUFFER, sphere_positionBuffer);
             gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
 
             gl.enableVertexAttribArray(colorLocation);
             gl.bindBuffer(gl.ARRAY_BUFFER, sphere_colorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, update_sphere_colors, gl.STATIC_DRAW);
             gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
 
             gl.enableVertexAttribArray(sizeLocation);
             gl.bindBuffer(gl.ARRAY_BUFFER, sphere_sizeBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, update_sphere_sizes, gl.STATIC_DRAW);
             gl.vertexAttribPointer(sizeLocation, 1, gl.FLOAT, false, 0, 0);
 
             gl.drawArrays(gl.POINTS, 0, sphere_positions.length / 3);
