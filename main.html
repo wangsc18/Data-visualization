@@ -17,14 +17,21 @@
         padding: 10px 20px;
         z-index: 1000;
     }
+    .canvas-container {
+        display: flex;
+    }
     </style>
     <button id="toggleDragMode">Toggle Drag Mode</button>
     <div id="canvasContainer"></div>
     <script>
     (function() {
         var width = 1200, height = 1200;
-        var canvas = d3.select('body').append('canvas').attr('width', width).attr('height', height);
-        var gl = canvas.node().getContext('webgl');
+        var width1 = 800, height1 = 1200;
+        var width2 = 100, height2 = 100;
+        var container = d3.select('body').append('div').attr('class', 'canvas-container');
+        var canvas1 = container.append('canvas').attr('width', width).attr('height', height);
+        var canvas2 = container.append('svg').attr('width', width1).attr('height', height1);
+        var gl = canvas1.node().getContext('webgl');
 
         // 设置视口
         var rotation = [0, 0];
@@ -37,6 +44,8 @@
 
         // 选中的球体列表
         var selectedSpheres = [];
+
+        var canvas2rect = [];
 
         document.getElementById('toggleDragMode').addEventListener('click', function() {
             dragMode = !dragMode;
@@ -56,10 +65,10 @@
                 draw();
             });
         
-        canvas.call(drag);
-        canvas.call(drag);
+        canvas1.call(drag);
+        canvas1.call(drag);
 
-        canvas.on('wheel', function(event) {
+        canvas1.on('wheel', function(event) {
             // 更新缩放因子
             scale += event.deltaY * -0.001;
             scale = Math.min(Math.max(.125, scale), 4);
@@ -70,13 +79,13 @@
             draw();
         });
 
-        canvas.node().addEventListener('click', function(e) {
+        canvas1.node().addEventListener('click', function(e) {
             if (dragMode) {
                 // 如果dragMode为true，不执行选中球体的代码
                 return;
             }
 
-            var rect = canvas.node().getBoundingClientRect();
+            var rect = canvas1.node().getBoundingClientRect();
             var x = e.clientX - rect.left;
             var y = rect.bottom - e.clientY;
             var pixels = new Uint8Array(4);
@@ -95,11 +104,46 @@
             if (selectedIndex === -1) {
                 // 如果该球体没有被选中，将其添加到数组中
                 selectedSpheres.push(index);
+                let rectWidth = 100; // 矩形的宽度
+                let rectHeight = 100; // 矩形的高度
+                let rectX = 0; // 矩形的x坐标
+                let rectY = selectedSpheres.length * 110;
+
+                let color = d3.rgb(sphere_colors[index * 3] * 255, sphere_colors[index * 3 + 1] * 255, sphere_colors[index * 3 + 2] * 255);
+                
+                let rect = canvas2.append('rect')
+                    .attr('x', rectX)
+                    .attr('y', (selectedSpheres.length - 1) * 110)
+                    .attr('width', rectWidth)
+                    .attr('height', rectHeight)
+                    .attr('fill', color)
+                
+                canvas2rect.push(rect);
+                console.log(canvas2rect);
+
             } else {
                 // 如果该球体已经被选中，从数组中移除它
                 selectedSpheres.splice(selectedIndex, 1);
+                console.log(selectedIndex);
+
+                canvas2rect[selectedIndex].remove();
+                canvas2rect.splice(selectedIndex, 1);
+                console.log(canvas2rect);
+
+                for (let i = selectedIndex; i < canvas2rect.length; i++) {
+                    canvas2rect[i].attr('y', i * 110);
+                }
+
+
+
+
+
+
+
             }
             console.log('Selected spheres: ' + selectedSpheres);
+
+            
 
             // 绘制
             draw();
@@ -238,6 +282,7 @@
                 sphere_colors[i * 3 + 1] = color.g / 255;
                 sphere_colors[i * 3 + 2] = color.b / 255;
             });
+            // console.log(sphere_colors);
             update_sphere_sizes = sphere_sizes.slice();
             update_sphere_colors = sphere_colors.slice();
 
@@ -418,7 +463,6 @@
             gl.vertexAttribPointer(sizeLocation, 1, gl.FLOAT, false, 0, 0);
 
             gl.drawArrays(gl.POINTS, 0, scatter_positions.length / 3);
-            
 
         }
     })();
