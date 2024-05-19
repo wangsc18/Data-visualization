@@ -46,6 +46,7 @@
         var selectedSpheres = [];
 
         var canvas2rect = [];
+        var canvas2recttext = [];
 
         document.getElementById('toggleDragMode').addEventListener('click', function() {
             dragMode = !dragMode;
@@ -104,7 +105,7 @@
             if (selectedIndex === -1) {
                 // 如果该球体没有被选中，将其添加到数组中
                 selectedSpheres.push(index);
-                let rectWidth = 100; // 矩形的宽度
+                let rectWidth = 250; // 矩形的宽度
                 let rectHeight = 100; // 矩形的高度
                 let rectX = 0; // 矩形的x坐标
                 let rectY = selectedSpheres.length * 110;
@@ -117,9 +118,39 @@
                     .attr('width', rectWidth)
                     .attr('height', rectHeight)
                     .attr('fill', color)
-                
+                    .attr('fill-opacity', scatter_alpha)
+                    .on('click', function() {  // 添加这行来添加点击事件
+                        
+                        let index_rect = canvas2rect.indexOf(rect);
+                        selectedSpheres.splice(index_rect, 1);  
+
+                        canvas2rect[index_rect].remove();
+                        canvas2recttext[index_rect].remove();
+
+                        canvas2rect.splice(index_rect, 1);
+                        canvas2recttext.splice(index_rect, 1);
+
+                        for (let i = 0; i < canvas2rect.length; i++) {
+                            canvas2rect[i].attr('y', i * 110);
+                            canvas2recttext[i].attr('y', i * 110 + rectHeight / 2);
+                        }
+
+                        draw();
+                    });
+
+                let text = canvas2.append('text')
+                    .attr('x', rectX + rectWidth / 2)  // 修改这行来设置文本的x位置为矩形的中心
+                    .attr('y', (selectedSpheres.length - 1) * 110 + rectHeight / 2)  // 修改这行来设置文本的y位置为矩形的中心
+                    .text(sphere_emotion[index])
+                    .attr('font-size', '20px')
+                    .attr('fill', 'black')
+                    .attr('text-anchor', 'middle')  // 添加这行来设置文本的水平对齐方式为居中
+                    .attr('dominant-baseline', 'middle');  // 添加这行来设置文本的垂直对齐方式为居中
+
                 canvas2rect.push(rect);
-                console.log(canvas2rect);
+                canvas2recttext.push(text);
+
+                // console.log(canvas2rect);
 
             } else {
                 // 如果该球体已经被选中，从数组中移除它
@@ -127,18 +158,15 @@
                 console.log(selectedIndex);
 
                 canvas2rect[selectedIndex].remove();
+                canvas2recttext[selectedIndex].remove();
                 canvas2rect.splice(selectedIndex, 1);
-                console.log(canvas2rect);
+                canvas2recttext.splice(selectedIndex, 1);   
+                // console.log(canvas2rect);
 
                 for (let i = selectedIndex; i < canvas2rect.length; i++) {
                     canvas2rect[i].attr('y', i * 110);
+                    canvas2recttext[i].attr('y', i * 110);
                 }
-
-
-
-
-
-
 
             }
             console.log('Selected spheres: ' + selectedSpheres);
