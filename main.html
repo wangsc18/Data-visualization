@@ -26,7 +26,7 @@
     <script>
     (function() {
         var width = 1200, height = 1200;
-        var width1 = 800, height1 = 1200;
+        var width1 = 1200, height1 = 1200;
         var width2 = 100, height2 = 100;
         var container = d3.select('body').append('div').attr('class', 'canvas-container');
         var canvas1 = container.append('canvas').attr('width', width).attr('height', height);
@@ -132,14 +132,7 @@
 
             var selectedIndex = selectedSpheres.indexOf(index);
             if (selectedIndex === -1) {
-                
-                if (canvas2rect.length >= 2 ){
-                    alert('最多只能选择2个球体');
-                    return;
-                }
-                
-                
-
+            
                 // 如果该球体没有被选中，将其添加到数组中
                 selectedSpheres.push(index);
                 let rectWidth = 250; // 矩形的宽度
@@ -186,87 +179,97 @@
 
                 canvas2rect.push(rect);
                 canvas2recttext.push(text);
-                
-                let maxIndices = initial_points.map(function(row) {
+
+                if(canvas2rect.length == 3)
+                {
+                    let movex = 400;
+                    let movey = 600;
+
+                    let col1 = selectedSpheres[0];
+                    let col2 = selectedSpheres[1];
+
+                    let maxIndices = initial_points.map(function(row) {
                         let max = Math.max.apply(null, row);
                         return row.indexOf(max);
                     });
-                
-                show_points = [];
-                for (let i = 0;i<maxIndices.length;i++){
-                    if (maxIndices[i] == index){
-                        show_points.push(initial_points[i]);
+                    
+                    show_points = [];
+                    for (let i = 0;i<maxIndices.length;i++){
+                        if (maxIndices[i] == index | maxIndices[i] == col1 | maxIndices[i] == col2){
+                            show_points.push(initial_points[i]);
+                        }
                     }
+
+                    console.log(show_points);
+                    
+                    let newShowPoints = show_points.map(function(row) {
+                            return [row[index], row[col1], row[col2]];
+                        });
+                    console.log(newShowPoints);
+
+                    // 创建x、y和z轴的比例尺
+                    let xScale = d3.scaleLinear().domain([0, 1]).range([0,400]);
+                    let yScale = d3.scaleLinear().domain([0, 1]).range([400, 0]);
+                    let zScale = d3.scaleLinear().domain([0, 1]).range([0, 300]);
+
+                    // 创建x轴
+                    let xAxis = d3.axisBottom(xScale);
+                    canvas2.append("g")
+                        .attr("transform", "translate(400,600) rotate(0)")
+                        .call(xAxis);
+
+                    // 创建y轴
+                    let yAxis = d3.axisLeft(yScale);
+                    canvas2.append("g")
+                        .attr("transform", "translate(400,200) rotate(0)")
+                        .call(yAxis);
+
+                    // 创建z轴
+                    let zAxis = d3.axisRight(zScale);
+                    canvas2.append("g")
+                        .attr("transform", "translate(400,600) rotate(45)")
+                        .call(zAxis);
+
+                    
+
+                    let theta = Math.PI / 4; // 旋转角度，可以根据需要调整
+
+                    for(let i = 0; i < newShowPoints.length; i++) {
+                        // 将三维坐标旋转
+
+                        let x = xScale(newShowPoints[i][0]);
+                        let y = 400 - yScale(newShowPoints[i][1]);
+                        let z = zScale(newShowPoints[i][2]);
+
+
+                        let rotatedX = x - 0.5 * Math.sqrt(2) * z;
+                        let rotatedY = - y + 0.5 * Math.sqrt(2) * z;
+
+                        // console.log(newShowPoints[i][0],newShowPoints[i][1],newShowPoints[i][2],x,y,z);
+                        // console.log(x);
+                        console.log(rotatedX,rotatedY);
+
+                        color_print = [];
+                        for (let j = 0; j < 3; j++) {
+                            total_pos = newShowPoints[i][0] + newShowPoints[i][1] + newShowPoints[i][2];
+                            total_color = sphere_colors[index *3 + j] * newShowPoints[i][0] + sphere_colors[col1 * 3 + j] * newShowPoints[i][1] + sphere_colors[col2 * 3 + j] * newShowPoints[i][2];   
+                            color_print.push(total_color / total_pos);
+                        }
+                        
+                        
+
+
+                        let circle = canvas2.append('circle')
+                            .attr('cx', rotatedX + 400)
+                            .attr('cy', rotatedY + 600)
+                            .attr('r', 5)
+                            .attr('fill', d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
+                            .attr('fill-opacity', ((newShowPoints[i][0] + newShowPoints[i][1] + newShowPoints[i][2] ) / 3));
+                    }
+                
                 }
-
-                console.log(show_points);
-                let col1 = closest_emtions[index][0];
-                let col2 = closest_emtions[index][1];
-
-                let newShowPoints = show_points.map(function(row) {
-                        return [row[index], row[col1], row[col2]];
-                    });
-                console.log(newShowPoints);
-
-                // 创建x、y和z轴的比例尺
-                let xScale = d3.scaleLinear().domain([0, 1]).range([0,600]);
-                let yScale = d3.scaleLinear().domain([0, 1]).range([600, 0]);
-                let zScale = d3.scaleLinear().domain([0, 1]).range([0, 600]);
-
-                // 创建x轴
-                let xAxis = d3.axisBottom(xScale);
-                canvas2.append("g")
-                    .attr("transform", "translate(200,400) rotate(174)")
-                    .call(xAxis);
-
-                // 创建y轴
-                let yAxis = d3.axisLeft(yScale);
-                canvas2.append("g")
-                    .attr("transform", "translate(200,400) rotate(45)")
-                    .call(yAxis);
-
-                // 创建z轴
-                let zAxis = d3.axisRight(zScale);
-                canvas2.append("g")
-                    .attr("transform", "translate(200,400) rotate(20.3389993)")
-                    .call(zAxis);
-
                 
 
-                let theta = Math.PI / 4; // 旋转角度，可以根据需要调整
-
-                for(let i = 0; i < newShowPoints.length; i++) {
-                    let x = xScale(newShowPoints[i][0]);
-                    let y = yScale(newShowPoints[i][1]);
-                    let z = zScale(newShowPoints[i][2]);
-
-                    // 定义旋转矩阵
-
-                    //x: -20, y :45, z:30
-                    let rotationMatrix = [  
-                        [0.6123725, -0.3535534,  0.7071068],
-                        [0.2604026,  0.9347200,  0.2418448],
-                        [-0.7464519,  0.0360334,  0.6644630]
-                    ];
-
-                    // 将三维坐标旋转
-                    let rotatedX = rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z;
-                    let rotatedY = rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z;
-                    let rotatedZ = rotationMatrix[2][0] * x + rotationMatrix[2][1] * y + rotationMatrix[2][2] * z;
-
-                    // 投影到二维坐标
-                    let projectedX = rotatedX;
-                    let projectedY = rotatedY;
-
-                    console.log(projectedX, projectedY);
-
-                    let circle = canvas2.append('circle')
-                        .attr('cx', projectedX + 200)
-                        .attr('cy', projectedY + 400)
-                        .attr('r', 5)
-                        .attr('fill', 'red')
-                        .attr('fill-opacity', 0.5);
-                }
 
 
 
