@@ -33,6 +33,7 @@
         var canvas2 = container.append('svg').attr('width', width1).attr('height', height1);
         var gl = canvas1.node().getContext('webgl');
 
+
         // 设置视口
         var rotation = [0, 0];
         var scale = 1.0;
@@ -47,6 +48,34 @@
 
         var canvas2rect = [];
         var canvas2recttext = [];
+
+        var closest_emtions = [];
+        var initial_points = [];
+
+        d3.csv("closest_emotions_labels.csv").then(function(data) {
+            data.forEach(function(d) {
+                closest_emtions.push([d['Closest Emotion 1 Label'], d['Closest Emotion 2 Label']]);
+            });
+        })
+        // console.log(closest_emtions);
+
+        d3.csv("CowenKeltnerEmotionalVideos.csv").then(function(data) {
+            data.forEach(function(d) {
+                let row = [];
+                Object.keys(d).forEach(function(key) {
+                    row.push(d[key]);
+                });
+                // 去除第一列并将其他内容转换为浮点数
+                row = row.slice(1).map(function(item) {
+                    return parseFloat(item);
+                });
+                initial_points.push(row);
+            });
+        })
+        console.log(initial_points);
+
+
+
 
         document.getElementById('toggleDragMode').addEventListener('click', function() {
             dragMode = !dragMode;
@@ -103,6 +132,14 @@
 
             var selectedIndex = selectedSpheres.indexOf(index);
             if (selectedIndex === -1) {
+                
+                if (canvas2rect.length >= 2 ){
+                    alert('最多只能选择2个球体');
+                    return;
+                }
+                
+                
+
                 // 如果该球体没有被选中，将其添加到数组中
                 selectedSpheres.push(index);
                 let rectWidth = 250; // 矩形的宽度
@@ -149,8 +186,90 @@
 
                 canvas2rect.push(rect);
                 canvas2recttext.push(text);
+                
+                let maxIndices = initial_points.map(function(row) {
+                        let max = Math.max.apply(null, row);
+                        return row.indexOf(max);
+                    });
+                
+                show_points = [];
+                for (let i = 0;i<maxIndices.length;i++){
+                    if (maxIndices[i] == index){
+                        show_points.push(initial_points[i]);
+                    }
+                }
 
-                // console.log(canvas2rect);
+                console.log(show_points);
+                let col1 = closest_emtions[index][0];
+                let col2 = closest_emtions[index][1];
+
+                let newShowPoints = show_points.map(function(row) {
+                        return [row[index], row[col1], row[col2]];
+                    });
+                console.log(newShowPoints);
+
+                // 创建x、y和z轴的比例尺
+                let xScale = d3.scaleLinear().domain([0, 1]).range([0,600]);
+                let yScale = d3.scaleLinear().domain([0, 1]).range([600, 0]);
+                let zScale = d3.scaleLinear().domain([0, 1]).range([0, 600]);
+
+                // 创建x轴
+                let xAxis = d3.axisBottom(xScale);
+                canvas2.append("g")
+                    .attr("transform", "translate(200,400) rotate(174)")
+                    .call(xAxis);
+
+                // 创建y轴
+                let yAxis = d3.axisLeft(yScale);
+                canvas2.append("g")
+                    .attr("transform", "translate(200,400) rotate(45)")
+                    .call(yAxis);
+
+                // 创建z轴
+                let zAxis = d3.axisRight(zScale);
+                canvas2.append("g")
+                    .attr("transform", "translate(200,400) rotate(20.3389993)")
+                    .call(zAxis);
+
+                
+
+                let theta = Math.PI / 4; // 旋转角度，可以根据需要调整
+
+                for(let i = 0; i < newShowPoints.length; i++) {
+                    let x = xScale(newShowPoints[i][0]);
+                    let y = yScale(newShowPoints[i][1]);
+                    let z = zScale(newShowPoints[i][2]);
+
+                    // 定义旋转矩阵
+
+                    //x: -20, y :45, z:30
+                    let rotationMatrix = [  
+                        [0.6123725, -0.3535534,  0.7071068],
+                        [0.2604026,  0.9347200,  0.2418448],
+                        [-0.7464519,  0.0360334,  0.6644630]
+                    ];
+
+                    // 将三维坐标旋转
+                    let rotatedX = rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z;
+                    let rotatedY = rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z;
+                    let rotatedZ = rotationMatrix[2][0] * x + rotationMatrix[2][1] * y + rotationMatrix[2][2] * z;
+
+                    // 投影到二维坐标
+                    let projectedX = rotatedX;
+                    let projectedY = rotatedY;
+
+                    console.log(projectedX, projectedY);
+
+                    let circle = canvas2.append('circle')
+                        .attr('cx', projectedX + 200)
+                        .attr('cy', projectedY + 400)
+                        .attr('r', 5)
+                        .attr('fill', 'red')
+                        .attr('fill-opacity', 0.5);
+                }
+
+
+
 
             } else {
                 // 如果该球体已经被选中，从数组中移除它
