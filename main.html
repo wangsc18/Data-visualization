@@ -102,6 +102,8 @@
                 points_1D.push(circle);
             }
         }
+
+
         function print_2D(index1,index2)
         {
             let movex = 400;
@@ -112,18 +114,30 @@
                 return row.indexOf(max);
             });
 
+            show_points_x = [];
+            show_points_y = [];
             show_points = [];
+
             for (let i = 0;i<maxIndices.length;i++){
+                if (maxIndices[i] == index1){
+                    show_points_x.push(initial_points[i]);
+                }
+                if (maxIndices[i] == index2){
+                    show_points_y.push(initial_points[i]);
+                }
                 if (maxIndices[i] == index1 | maxIndices[i] == index2){
                     show_points.push(initial_points[i]);
                 }
             }
 
             // console.log(show_points);
-
-            let newShowPoints = show_points.map(function(row) {
-                    return [row[index1], row[index2]];
+            let newShowPointsx = show_points_x.map(function(row) {
+                    return [row[index1],row[index2]];
                 });
+            let newShowPointsy = show_points_y.map(function(row) {
+                    return [row[index1],row[index2]];
+                });
+
             // console.log(newShowPoints);
 
             // 创建x、y和z轴的比例尺
@@ -145,7 +159,61 @@
             axis.push(yAxisG);
 
             
+                
 
+            for(let i = 0;i < newShowPointsx.length;i++)
+            {
+                let color_print = [];
+                color_print.push((sphere_colors[index1 * 3] * newShowPointsx[i][0] + sphere_colors[index2 * 3] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
+                color_print.push((sphere_colors[index1 * 3 + 1] * newShowPointsx[i][0] + sphere_colors[index2 * 3 + 1] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
+                color_print.push((sphere_colors[index1 * 3 + 2] * newShowPointsx[i][0] + sphere_colors[index2 * 3 + 2] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
+                
+                
+                let circle = canvas2.append('circle')
+                    .attr('cx', xScale(newShowPointsx[i][0]) + 400)
+                    .attr('cy', 600)
+                    .attr('r', 5)
+                    .attr('fill', d3.rgb(sphere_colors[index1 * 3] * 255, sphere_colors[index1 * 3 + 1] * 255, sphere_colors[index1 * 3 + 2] * 255))
+                    .attr('fill-opacity', (newShowPointsx[i][0]));
+
+                circle.transition()
+                    .duration(1000)
+                    .attr('cy', yScale(newShowPointsx[i][1]) + movey - 400)
+                    .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
+                    .attr('fill-opacity', (newShowPointsx[i][0] + newShowPointsx[i][1]) / 2);
+                
+
+                points_2D.push(circle);
+
+            }
+            
+            for(let i = 0;i < newShowPointsy.length;i++)
+            {
+                let color_print = [];
+                color_print.push((sphere_colors[index1 * 3] * newShowPointsy[i][0] + sphere_colors[index2 * 3] * newShowPointsy[i][1])/(newShowPointsy[i][0] + newShowPointsy[i][1]));
+                color_print.push((sphere_colors[index1 * 3 + 1] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + 1] * newShowPointsy[i][1])/(newShowPointsy[i][0] + newShowPointsy[i][1]));
+                color_print.push((sphere_colors[index1 * 3 + 2] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + 2] * newShowPointsy[i][1])/(newShowPointsy[i][0] + newShowPointsy[i][1]));
+                
+                let circle = canvas2.append('circle')
+                    .attr('cx', movex)
+                    .attr('cy', 600 - yScale(newShowPointsy[i][1]))
+                    .attr('r', 5)
+                    .attr('fill', d3.rgb(sphere_colors[index2 * 3] * 255, sphere_colors[index2 * 3 + 1] * 255, sphere_colors[index2 * 3 + 2] * 255))
+                    .attr('fill-opacity', (newShowPointsy[i][1]));
+                
+                circle.transition()
+                    .duration(1000)
+                    .attr('cx', xScale(newShowPointsy[i][0]) + movex)
+                    .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
+                    .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
+
+                points_2D.push(circle);
+
+            }
+            
+
+            
+            /*
             for(let i = 0; i < newShowPoints.length; i++) {
 
                 let color_print = [];
@@ -165,7 +233,9 @@
 
                 points_2D.push(circle);
             }
+            */
         }
+        
         function print_3D(index1,index2,index3)
         {
             let movex = 400;
@@ -177,7 +247,20 @@
             });
             
             show_points = [];
+            show_points_x = [];
+            show_points_y = [];
+            show_points_z = [];
+
             for (let i = 0;i<maxIndices.length;i++){
+                if (maxIndices[i] == index1){
+                    show_points_x.push(initial_points[i]);
+                }
+                if (maxIndices[i] == index2){
+                    show_points_y.push(initial_points[i]);
+                }
+                if (maxIndices[i] == index3){
+                    show_points_z.push(initial_points[i]);
+                }
                 if (maxIndices[i] == index1 | maxIndices[i] == index2 | maxIndices[i] == index3){
                     show_points.push(initial_points[i]);
                 }
@@ -188,6 +271,16 @@
             let newShowPoints = show_points.map(function(row) {
                     return [row[index1], row[index2], row[index3]];
                 });
+            let newShowPointsx = show_points_x.map(function(row) {
+                    return [row[index1], row[index2], row[index3]];
+                });
+            let newShowPointsy = show_points_y.map(function(row) {
+                    return [row[index1], row[index2], row[index3]];
+                });
+            let newShowPointsz = show_points_z.map(function(row) {
+                    return [row[index1], row[index2], row[index3]];
+                });
+
             // console.log(newShowPoints);
 
             // 创建x、y和z轴的比例尺
@@ -218,6 +311,101 @@
 
             let theta = Math.PI / 4; // 旋转角度，可以根据需要调整
 
+            for (let i = 0; i<newShowPointsx.length; i++)
+            {
+                let color_print_2D = [];
+                for (let j = 0; j < 3; j++) {
+                    total_pos = newShowPointsx[i][0] + newShowPointsx[i][1];
+                    total_color = sphere_colors[index1 *3 + j] * newShowPointsx[i][0] + sphere_colors[index2 * 3 + j] * newShowPointsx[i][1];   
+                    color_print_2D.push(total_color / total_pos);
+                }
+
+                let color_print_3D = [];
+                for (let j = 0; j < 3; j++) {
+                    total_pos = newShowPointsx[i][0] + newShowPointsx[i][1] + newShowPointsx[i][2];
+                    total_color = sphere_colors[index1 *3 + j] * newShowPointsx[i][0] + sphere_colors[index2 * 3 + j] * newShowPointsx[i][1] + sphere_colors[index3 * 3 + j] * newShowPointsx[i][2];   
+                    color_print_3D.push(total_color / total_pos);
+                }
+
+                
+                let circle = canvas2.append('circle')
+                    .attr('cx', xScale(newShowPointsx[i][0]) + 400)
+                    .attr('cy', yScale(newShowPointsx[i][1]) + movey - 400)
+                    .attr('r', 5)
+                    .attr('fill', d3.rgb(color_print_2D[0] * 255, color_print_2D[1] * 255, color_print_2D[2] * 255))
+                    .attr('fill-opacity', ((newShowPointsx[i][0] + newShowPointsx[i][1]) / 2));
+                
+                circle.transition()
+                    .duration(1000)
+                    .attr('cx',xScale(newShowPointsx[i][0]) - zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2) + 400)
+                    .attr('cy', yScale(newShowPointsx[i][1]) + movey - 400 + zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2))
+                    .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
+                    .attr('fill-opacity', ((newShowPointsx[i][0] + newShowPointsx[i][1] + newShowPointsx[i][2]) / 3))
+
+                points_3D.push(circle);
+            }
+            
+            for(let i = 0; i<newShowPointsy.length; i++)
+            {
+                let color_print_2D = [];
+                for (let j = 0; j < 3; j++) {
+                    total_pos = newShowPointsy[i][0] + newShowPointsy[i][1];
+                    total_color = sphere_colors[index1 *3 + j] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + j] * newShowPointsy[i][1];   
+                    color_print_2D.push(total_color / total_pos);
+                }
+                let color_print_3D = [];
+                for (let j = 0; j < 3; j++) {
+                    total_pos = newShowPointsy[i][0] + newShowPointsy[i][1] + newShowPointsy[i][2];
+                    total_color = sphere_colors[index1 *3 + j] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + j] * newShowPointsy[i][1] + sphere_colors[index3 * 3 + j] * newShowPointsy[i][2];   
+                    color_print_3D.push(total_color / total_pos);
+                }
+
+                let circle = canvas2.append('circle')
+                    .attr('cx', xScale(newShowPointsy[i][0]) + movex)
+                    .attr('cy', 600 - yScale(newShowPointsy[i][1]))
+                    .attr('r', 5)
+                    .attr('fill', d3.rgb(color_print_2D[0] * 255, color_print_2D[1] * 255, color_print_2D[2] * 255))
+                    .attr('fill-opacity', ((newShowPointsy[i][0] + newShowPointsy[i][1]) / 2));
+                
+                circle.transition()
+                    .duration(1000)
+                    .attr('cx', xScale(newShowPointsy[i][0]) - zScale(newShowPointsy[i][2]) * 0.5 * Math.sqrt(2) + movex)
+                    .attr('cy', 600 - yScale(newShowPointsy[i][1]) + newShowPointsy[i][2] * 0.5 * Math.sqrt(2))
+                    .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
+                    .attr('fill-opacity', ((newShowPointsy[i][0] + newShowPointsy[i][1] + newShowPointsy[i][2]) / 3))
+                
+                points_3D.push(circle);
+            }
+
+            for(let i=0; i<newShowPointsz.length; i++)
+            {
+                let color_print_3D = [];
+                for (let j = 0; j < 3; j++) {
+                    total_pos = newShowPointsz[i][0] + newShowPointsz[i][1] + newShowPointsz[i][2];
+                    total_color = sphere_colors[index1 *3 + j] * newShowPointsz[i][0] + sphere_colors[index2 * 3 + j] * newShowPointsz[i][1] + sphere_colors[index3 * 3 + j] * newShowPointsz[i][2];   
+                    color_print_3D.push(total_color / total_pos);
+                }
+
+                let circle = canvas2.append('circle')
+                    .attr('cx', movex - zScale(newShowPointsz[i][2] * 0.5 * Math.sqrt(2)))
+                    .attr('cy', 600 + zScale(newShowPointsz[i][2] * 0.5 * Math.sqrt(2)))
+                    .attr('r', 5)
+                    .attr('fill', d3.rgb(sphere_colors[index3 * 3] * 255, sphere_colors[index3 * 3 + 1] * 255, sphere_colors[index3 * 3 + 2] * 255))
+                    .attr('fill-opacity', ((newShowPointsz[i][2])));
+                
+                circle.transition()
+                    .duration(1000)
+                    .attr('cx', xScale(newShowPointsz[i][0]) - zScale(newShowPointsz[i][2]) * 0.5 * Math.sqrt(2) + movex)
+                    .attr('cy', 200 + yScale(newShowPointsz[i][1]) + zScale(newShowPointsz[i][2]) * 0.5 * Math.sqrt(2))
+                    .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
+                    .attr('fill-opacity', ((newShowPointsz[i][0] + newShowPointsz[i][1] + newShowPointsz[i][2]) / 3))
+                
+                points_3D.push(circle);
+            }
+
+
+
+            /*
             for(let i = 0; i < newShowPoints.length; i++) {
                 // 将三维坐标旋转
 
@@ -249,6 +437,7 @@
 
                 points_3D.push(circle);
             }
+            */
         }
 
         function drawCanvas2()
@@ -311,7 +500,19 @@
                     }
                     axis = [];
                     print_3D(selectedSpheres[0],selectedSpheres[1],selectedSpheres[2]);
-                    // 花你的代码应该在这里
+                    
+                }
+                if (canvas2rect.length > 3)
+                {
+                    for (let i = 0; i < points_3D.length; i++) {
+                        points_3D[i].remove();
+                    }
+                    points_3D = [];
+                    for (let i = 0; i < axis.length; i++) {
+                        axis[i].remove();
+                    }
+                    axis = [];
+
                 }
         }
 
