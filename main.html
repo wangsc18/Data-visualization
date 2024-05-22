@@ -10,9 +10,9 @@
 <body>
     <style>
     #toggleDragMode {
-        position: fixed;
-        top: 50%;
-        left: 50%;
+        position: absolute;
+        top: 100px;
+        left: 100px;
         transform: translate(-50%, -50%);
         padding: 10px 20px;
         z-index: 1000;
@@ -77,11 +77,11 @@
         var z_index = -1;
         var forth_index = -1;
 
-        var closest_emtions = [];
         var initial_points = [];
         var maxIndices = [];
         var filename = []
 
+        // 读取最原始的数据
         d3.csv("CowenKeltnerEmotionalVideos.csv").then(function(data) {
             data.forEach(function(d) {
                 let row = [];
@@ -200,7 +200,6 @@
             }
         }
 
-
         function print_2D(index1, index2)
         {
             show_points_x = [];
@@ -267,6 +266,7 @@
                         
                         points_x[i].transition()
                             .duration(1000)
+                            .attr('cx', xScale(newShowPointsx[i][0]) + movex)
                             .attr('cy', yScale(newShowPointsx[i][1]) + movey - movex)
                             .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
                             .attr('fill-opacity', (newShowPointsx[i][0] + newShowPointsx[i][1]) / 2);
@@ -282,6 +282,7 @@
                             points_y[i].transition()
                                 .duration(1000)
                                 .attr('cx', xScale(newShowPointsy[i][0]) + movex)
+                                .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                                 .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
                                 .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
                         }
@@ -290,6 +291,21 @@
                         }
                     }
                     else{
+                        // 保留points_x，将x移回去
+                        for(let i = 0; i < newShowPointsx.length; i++)
+                        {
+                            let color_print = [];
+                            color_print.push((sphere_colors[index1 * 3] * newShowPointsx[i][0] + sphere_colors[index2 * 3] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
+                            color_print.push((sphere_colors[index1 * 3 + 1] * newShowPointsx[i][0] + sphere_colors[index2 * 3 + 1] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
+                            color_print.push((sphere_colors[index1 * 3 + 2] * newShowPointsx[i][0] + sphere_colors[index2 * 3 + 2] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
+                            
+                            points_x[i].transition()
+                                .duration(1000)
+                                .attr('cx', xScale(newShowPointsx[i][0]) + movex)
+                                .attr('cy', yScale(newShowPointsx[i][1]) + movey - movex)
+                                .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
+                                .attr('fill-opacity', (newShowPointsx[i][0] + newShowPointsx[i][1]) / 2);
+                        }
                         // 保留points_z，删除points_y，将z移至y
                         for (let i = 0; i < points_y.length; i++) {
                             points_y[i].remove();
@@ -311,7 +327,7 @@
                                 .delay(500)
                                 .duration(500)
                                 .attr('cx', movex)
-                                .attr('cy', movey - yScale(newShowPointsy[i][1]))
+                                .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                                 .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
                                 .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
                             
@@ -319,7 +335,7 @@
                                 .delay(1000)
                                 .duration(500)
                                 .attr('cx', xScale(newShowPointsy[i][0]) + movex)
-                                .attr('cy', movey - yScale(newShowPointsy[i][1]))
+                                .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                                 .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
                                 .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
                         }
@@ -356,7 +372,7 @@
                             .delay(1000)
                             .duration(500)
                             .attr('cx', xScale(newShowPointsx[i][0]) + movex)
-                            .attr('cy', yScale(newShowPointsx[i][1]) + 200)
+                            .attr('cy', yScale(newShowPointsx[i][1]) + movey - movex)
                             .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
                             .attr('fill-opacity', (newShowPointsx[i][0] + newShowPointsx[i][1]) / 2);
                     }
@@ -378,7 +394,7 @@
                             .delay(500)
                             .duration(500)
                             .attr('cx', movex)
-                            .attr('cy', movey - yScale(newShowPointsy[i][1]))
+                            .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                             .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
                             .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
 
@@ -386,7 +402,7 @@
                             .delay(1000)
                             .duration(500)
                             .attr('cx', xScale(newShowPointsy[i][0]) + movex)
-                            .attr('cy', movey - yScale(newShowPointsy[i][1]))
+                            .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                             .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
                             .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
                     
@@ -411,6 +427,7 @@
                     
                     points_x[i].transition()
                         .duration(1000)
+                        .attr('cx', xScale(newShowPointsx[i][0]) + movex)
                         .attr('cy', yScale(newShowPointsx[i][1]) + movey - movex)
                         .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
                         .attr('fill-opacity', (newShowPointsx[i][0] + newShowPointsx[i][1]) / 2);
@@ -426,7 +443,7 @@
                     
                     let circle = canvas2.append('circle')
                         .attr('cx', movex)
-                        .attr('cy', movey - yScale(newShowPointsy[i][1]))
+                        .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                         .attr('r', 5)
                         .attr('fill', d3.rgb(sphere_colors[index2 * 3] * 255, sphere_colors[index2 * 3 + 1] * 255, sphere_colors[index2 * 3 + 2] * 255))
                         .attr('fill-opacity', (newShowPointsy[i][1]));
@@ -541,10 +558,9 @@
                         color_print_3D.push(total_color / total_pos);
                     }
                     
-                    
                     points_x[i].transition()
                         .duration(1000)
-                        .attr('cx',xScale(newShowPointsx[i][0]) - zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2) + movex)
+                        .attr('cx', xScale(newShowPointsx[i][0]) - zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2) + movex)
                         .attr('cy', yScale(newShowPointsx[i][1]) + movey - movex + zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2))
                         .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
                         .attr('fill-opacity', ((newShowPointsx[i][0] + newShowPointsx[i][1] + newShowPointsx[i][2]) / 3))
@@ -557,20 +573,20 @@
                     let color_print_2D = [];
                     for (let j = 0; j < 3; j++) {
                         total_pos = newShowPointsy[i][0] + newShowPointsy[i][1];
-                        total_color = sphere_colors[index1 *3 + j] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + j] * newShowPointsy[i][1];   
+                        total_color = sphere_colors[index1 * 3 + j] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + j] * newShowPointsy[i][1];   
                         color_print_2D.push(total_color / total_pos);
                     }
                     let color_print_3D = [];
                     for (let j = 0; j < 3; j++) {
                         total_pos = newShowPointsy[i][0] + newShowPointsy[i][1] + newShowPointsy[i][2];
-                        total_color = sphere_colors[index1 *3 + j] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + j] * newShowPointsy[i][1] + sphere_colors[index3 * 3 + j] * newShowPointsy[i][2];   
+                        total_color = sphere_colors[index1 * 3 + j] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + j] * newShowPointsy[i][1] + sphere_colors[index3 * 3 + j] * newShowPointsy[i][2];   
                         color_print_3D.push(total_color / total_pos);
                     }
                     
                     points_y[i].transition()
                         .duration(1000)
                         .attr('cx', xScale(newShowPointsy[i][0]) - zScale(newShowPointsy[i][2]) * 0.5 * Math.sqrt(2) + movex)
-                        .attr('cy', movey - yScale(newShowPointsy[i][1]) + newShowPointsy[i][2] * 0.5 * Math.sqrt(2))
+                        .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex + zScale(newShowPointsy[i][2] * 0.5 * Math.sqrt(2)))
                         .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
                         .attr('fill-opacity', ((newShowPointsy[i][0] + newShowPointsy[i][1] + newShowPointsy[i][2]) / 3))
                     
@@ -599,7 +615,7 @@
                     circle.transition()
                         .duration(1000)
                         .attr('cx', xScale(newShowPointsx[i][0]) - zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2) + movex)
-                        .attr('cy', 200 + yScale(newShowPointsx[i][1]) + zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2))
+                        .attr('cy', movey - movex + yScale(newShowPointsx[i][1]) + zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2))
                         .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
                         .attr('fill-opacity', ((newShowPointsx[i][0] + newShowPointsx[i][1] + newShowPointsx[i][2]) / 3))
                     
@@ -626,7 +642,7 @@
                     circle.transition()
                         .duration(1000)
                         .attr('cx', xScale(newShowPointsy[i][0]) - zScale(newShowPointsy[i][2]) * 0.5 * Math.sqrt(2) + movex)
-                        .attr('cy', 200 + yScale(newShowPointsy[i][1]) + zScale(newShowPointsy[i][2]) * 0.5 * Math.sqrt(2))
+                        .attr('cy', movey - movex + yScale(newShowPointsy[i][1]) + zScale(newShowPointsy[i][2]) * 0.5 * Math.sqrt(2))
                         .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
                         .attr('fill-opacity', ((newShowPointsy[i][0] + newShowPointsy[i][1] + newShowPointsy[i][2]) / 3))
                     
@@ -656,7 +672,7 @@
                 circle.transition()
                     .duration(1000)
                     .attr('cx', xScale(newShowPointsz[i][0]) - zScale(newShowPointsz[i][2]) * 0.5 * Math.sqrt(2) + movex)
-                    .attr('cy', 200 + yScale(newShowPointsz[i][1]) + zScale(newShowPointsz[i][2]) * 0.5 * Math.sqrt(2))
+                    .attr('cy', movey - movex + yScale(newShowPointsz[i][1]) + zScale(newShowPointsz[i][2]) * 0.5 * Math.sqrt(2))
                     .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
                     .attr('fill-opacity', ((newShowPointsz[i][0] + newShowPointsz[i][1] + newShowPointsz[i][2]) / 3))
                 
@@ -665,155 +681,149 @@
             z_index = index3;
         }
 
+        // 渲染右侧画布
         function drawCanvas2(addMark = false)
         {
             if (canvas2rect.length == 0)
-                {
-                    for (let i = 0; i < points_x.length; i++) {
-                        points_x[i].remove();
-                    }
-                    points_x = [];
-                    for (let i = 0; i < axis.length; i++) {
-                        axis[i][0].remove();
-                        axis[i][1].remove();
-                    }
-                    axis = [];
-                    // console.log(axis);
+            {
+                for (let i = 0; i < points_x.length; i++) {
+                    points_x[i].remove();
                 }
-
-                if (canvas2rect.length == 1)
-                {
-                    for (let i = 0; i < axis.length; i++) {
-                        axis[i][0].remove();
-                        axis[i][1].remove();
-                    }
-                    axis = [];
-                    print_1D(selectedSpheres[0]);
-                    // console.log(axis);
+                points_x = [];
+                for (let i = 0; i < axis.length; i++) {
+                    axis[i][0].remove();
+                    axis[i][1].remove();
                 }
+                axis = [];
+                // console.log(axis);
+            }
 
-                if (canvas2rect.length == 2)
-                {
-                    for (let i = 0; i < axis.length; i++) {
-                        axis[i][0].remove();
-                        axis[i][1].remove();
-                    }
-                    axis = [];
-                    print_2D(selectedSpheres[0],selectedSpheres[1]);
-                    // console.log(axis);
-
+            if (canvas2rect.length == 1)
+            {
+                for (let i = 0; i < axis.length; i++) {
+                    axis[i][0].remove();
+                    axis[i][1].remove();
                 }
+                axis = [];
+                print_1D(selectedSpheres[0]);
+                // console.log(axis);
+            }
 
-                if (canvas2rect.length == 3)
-                {
-                    for (let i = 0; i < axis.length; i++) {
-                        axis[i][0].remove();
-                        axis[i][1].remove();
-                    }
-                    axis = [];
-                    print_3D(selectedSpheres[0],selectedSpheres[1],selectedSpheres[2]);
-                    
+            if (canvas2rect.length == 2)
+            {
+                for (let i = 0; i < axis.length; i++) {
+                    axis[i][0].remove();
+                    axis[i][1].remove();
                 }
-                if (canvas2rect.length > 3)
-                {
-                    for (let i = 0; i < points_x.length; i++) {
-                        points_x[i].remove();
-                    }
-                    points_x = [];
-                    for (let i = 0; i < points_y.length; i++) {
-                        points_y[i].remove();
-                    }
-                    points_y = [];
-                    for (let i = 0; i < points_z.length; i++) {
-                        points_z[i].remove();
-                    }
-                    points_z = [];
-                    for (let i = 0; i < axis.length; i++) {
-                        axis[i][0].remove();
-                        axis[i][1].remove();
-                    }
-                    axis = [];
-                    forth_index = selectedSpheres[3];
+                axis = [];
+                print_2D(selectedSpheres[0],selectedSpheres[1]);
+                // console.log(axis);
+
+            }
+
+            if (canvas2rect.length == 3)
+            {
+                for (let i = 0; i < axis.length; i++) {
+                    axis[i][0].remove();
+                    axis[i][1].remove();
                 }
-                console.log(points_x.length, points_y.length, points_z.length);
+                axis = [];
+                print_3D(selectedSpheres[0],selectedSpheres[1],selectedSpheres[2]);
+            }
 
-                // 鼠标悬停时显示标签
-                for(let i = 0; i < points_x.length; i++) {
-                    points_x[i].on("mouseover", function(d) {
-                        // 创建提示框并设置其内容为对应的文件名
-                        let tooltip = d3.select("body").append("div")
-                            .attr("class", "tooltip")
-                            .style("opacity", .9)
-                            .style("left", (event.pageX + 10) + "px")
-                            .style("top", (event.pageY - 10) + "px");
-
-                        tooltip.append("p").text(file_list_x[i]);  // 修改这一行
-
-                        // 创建video元素并设置其src属性为对应的视频文件的URL
-                        tooltip.append("video")
-                            .attr("src", "video/" + file_list_x[i])
-                            .attr("controls", "true")
-                            .attr("autoplay", "true");
-                    })
-                    .on("mouseout", function(d) {
-                        // 鼠标移出时移除提示框
-                        d3.select(".tooltip").remove();
-                    });
+            if (canvas2rect.length > 3)
+            {
+                for (let i = 0; i < points_x.length; i++) {
+                    points_x[i].remove();
                 }
+                points_x = [];
                 for (let i = 0; i < points_y.length; i++) {
-                    points_y[i].on("mouseover", function(d) {
-                        // 创建提示框并设置其内容为对应的文件名
-                        let tooltip = d3.select("body").append("div")
-                            .attr("class", "tooltip")
-                            .style("opacity", .9)
-                            .style("left", (event.pageX + 10) + "px")
-                            .style("top", (event.pageY - 10) + "px");
-
-                        tooltip.append("p").text(file_list_y[i]);  // 修改这一行
-
-                        // 创建video元素并设置其src属性为对应的视频文件的URL
-                        tooltip.append("video")
-                            .attr("src", "video/" + file_list_y[i])
-                            .attr("controls", "true")
-                            .attr("autoplay", "true");
-                    })
-                    .on("mouseout", function(d) {
-                        // 鼠标移出时移除提示框
-                        d3.select(".tooltip").remove();
-                    });
+                    points_y[i].remove();
                 }
+                points_y = [];
                 for (let i = 0; i < points_z.length; i++) {
-                    points_z[i].on("mouseover", function(d) {
-                        // 创建提示框并设置其内容为对应的文件名
-                        let tooltip = d3.select("body").append("div")
-                            .attr("class", "tooltip")
-                            .style("opacity", .9)
-                            .style("left", (event.pageX + 10) + "px")
-                            .style("top", (event.pageY - 10) + "px");
-
-                        tooltip.append("p").text(file_list_z[i]);  // 修改这一行
-
-                        // 创建video元素并设置其src属性为对应的视频文件的URL
-                        tooltip.append("video")
-                            .attr("src", "video/" + file_list_z[i])
-                            .attr("controls", "true")
-                            .attr("autoplay", "true");
-                    })
-                    .on("mouseout", function(d) {
-                        // 鼠标移出时移除提示框
-                        d3.select(".tooltip").remove();
-                    });
+                    points_z[i].remove();
                 }
+                points_z = [];
+                for (let i = 0; i < axis.length; i++) {
+                    axis[i][0].remove();
+                    axis[i][1].remove();
+                }
+                axis = [];
+                forth_index = selectedSpheres[3];
+            }
+            console.log(points_x.length, points_y.length, points_z.length);
+
+            // 鼠标悬停时显示标签
+            for(let i = 0; i < points_x.length; i++) {
+                points_x[i].on("mouseover", function(d) {
+                    // 创建提示框并设置其内容为对应的文件名
+                    let tooltip = d3.select("body").append("div")
+                        .attr("class", "tooltip")
+                        .style("opacity", .9)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 10) + "px");
+
+                    tooltip.append("p").text(sphere_emotion[selectedSpheres[0]] + ' ' + file_list_x[i]);
+
+                    // 创建video元素并设置其src属性为对应的视频文件的URL
+                    tooltip.append("video")
+                        .attr("src", "video/" + file_list_x[i])
+                        .attr("controls", "true")
+                        .attr("autoplay", "true");
+                })
+                .on("mouseout", function(d) {
+                    // 鼠标移出时移除提示框
+                    d3.select(".tooltip").remove();
+                });
+            }
+            for (let i = 0; i < points_y.length; i++) {
+                points_y[i].on("mouseover", function(d) {
+                    // 创建提示框并设置其内容为对应的文件名
+                    let tooltip = d3.select("body").append("div")
+                        .attr("class", "tooltip")
+                        .style("opacity", .9)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 10) + "px");
+
+                    tooltip.append("p").text(sphere_emotion[selectedSpheres[1]] + ' ' + file_list_y[i]);
+
+                    // 创建video元素并设置其src属性为对应的视频文件的URL
+                    tooltip.append("video")
+                        .attr("src", "video/" + file_list_y[i])
+                        .attr("controls", "true")
+                        .attr("autoplay", "true");
+                })
+                .on("mouseout", function(d) {
+                    // 鼠标移出时移除提示框
+                    d3.select(".tooltip").remove();
+                });
+            }
+            for (let i = 0; i < points_z.length; i++) {
+                points_z[i].on("mouseover", function(d) {
+                    // 创建提示框并设置其内容为对应的文件名
+                    let tooltip = d3.select("body").append("div")
+                        .attr("class", "tooltip")
+                        .style("opacity", .9)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 10) + "px");
+
+                    tooltip.append("p").text(sphere_emotion[selectedSpheres[2]] + ' ' + file_list_z[i]);
+
+                    // 创建video元素并设置其src属性为对应的视频文件的URL
+                    tooltip.append("video")
+                        .attr("src", "video/" + file_list_z[i])
+                        .attr("controls", "true")
+                        .attr("autoplay", "true");
+                })
+                .on("mouseout", function(d) {
+                    // 鼠标移出时移除提示框
+                    d3.select(".tooltip").remove();
+                });
+            }
         }
 
-        d3.csv("closest_emotions_labels.csv").then(function(data) {
-            data.forEach(function(d) {
-                closest_emtions.push([d['Closest Emotion 1 Label'], d['Closest Emotion 2 Label']]);
-            });
-        })
-        // console.log(closest_emtions);
-
-
+        // 实现webgl的视角拖拽
         document.getElementById('toggleDragMode').addEventListener('click', function() {
             dragMode = !dragMode;
             document.body.style.cursor = dragMode ? 'grab' : 'auto';
@@ -833,8 +843,8 @@
             });
         
         canvas1.call(drag);
-        canvas1.call(drag);
-
+        
+        // 实现鼠标滚轮缩放
         canvas1.on('wheel', function(event) {
             // 更新缩放因子
             scale += event.deltaY * -0.001;
@@ -846,6 +856,7 @@
             draw();
         });
 
+        // 渲染左侧WebGL画布
         canvas1.node().addEventListener('click', function(e) {
             if (dragMode) {
                 // 如果dragMode为true，不执行选中球体的代码
@@ -954,6 +965,7 @@
             draw();
         });
 
+        // 着色器
         var vertexShaderSource = `
             attribute vec3 position;
             attribute vec3 color;
@@ -983,6 +995,7 @@
             }
         `;
 
+        // 初始化着色器
         var vertexShader = gl.createShader(gl.VERTEX_SHADER);
         gl.shaderSource(vertexShader, vertexShaderSource);
         gl.compileShader(vertexShader);
