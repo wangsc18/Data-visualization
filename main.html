@@ -4,7 +4,16 @@
     <title>pca</title>
     <script src="d3.min.js"></script>
     <script src="d3-v6-tip.js"></script>
+    <script src="https://d3js.org/d3-chord.v1.min.js"></script>
+
     <link rel="stylesheet" href="d3-tip.css">
+    <style>
+        .chord path {
+          fill-opacity: .67;
+          stroke: #000;
+          stroke-width: .5px;
+        }
+    </style>
 </head>
 
 <body>
@@ -22,7 +31,9 @@
     }
     </style>
     <button id="toggleDragMode">Toggle Drag Mode</button>
-    <div id="canvasContainer"></div>
+    <div id="canvasContainer" class="canvas-container">
+        <div class="graph columns eight"></div>
+    </div>
     <script>
     (function() {
         var width = 1200, height = 1200;
@@ -52,6 +63,7 @@
         var points_3D = [];
         var points_2D = [];
         var points_1D = [];
+        var chord_attr = []
 
         var closest_emtions = [];
         var initial_points = [];
@@ -440,6 +452,213 @@
             */
         }
 
+        function makeObjs(data, headings) {
+            var intIndex,
+                objIntList = [];
+          
+            for (z = 0; z < headings.length; z++) { 
+              intIndex = z
+              var objRulesTo = [],
+                objRulesFrom = [];
+              for (x = 0; x < headings.length; x++) {
+                objRulesTo.push(data[z][x]);
+              }
+              for (y = 0; y < headings.length; y++) {
+                objRulesFrom.push(data[y][z]);
+              }
+              var objDetails = {
+                index: intIndex,
+                rulesTo: objRulesTo,
+                rulesFrom: objRulesFrom
+              };
+              objIntList.push(objDetails);
+            }
+            return objIntList;
+        }
+
+        function dispText(divName, data) {
+            divName.select("table")
+            .select("tbody")
+            .selectAll("tr")
+            .data(data)
+            .enter()
+            .append("tr").style("display", function(d){ return d> 0 ? null : "none";})
+            .append("td").text(function(d, i) {return headers[i];})
+            divName.select("tbody").selectAll("tr").append("td").text(function(d) { return d;});
+        }
+
+        function print_chord(selectedSpheres)
+        {
+            d3.csv("emotion_matrix.csv").then(function(data) {
+                // 将CSV文件转换为一个二维数组
+                let emotionMatrix = [];
+                let movex = 800;
+                let movey = 600;
+
+                for (let i = 0; i < data.length; i++) {
+                    let row = [];
+                    for (let key in data[i]) {
+                        if (key !== "") { // 忽略空列名
+                            row.push(+data[i][key]);
+                        }
+                    }
+                    emotionMatrix.push(row);
+                }
+        
+                // 根据selectedSpheres生成n*n的matrix
+                let n = selectedSpheres.length;
+                let matrix = Array.from(Array(n), () => Array(n).fill(0));               
+                for (let i = 0; i < n; i++) {
+                    for (let j = 0; j < n; j++) {
+                        let rowIndex = selectedSpheres[i];
+                        let colIndex = selectedSpheres[j];
+                        matrix[i][j] = emotionMatrix[rowIndex][colIndex];
+                    }
+                }
+                console.log(matrix)
+                let headers = selectedSpheres.map(index => {
+                    return sphere_emotion[index];
+                })
+                var textLabel = d3.scaleOrdinal().range(headers);
+                var objList = []
+                objList = makeObjs(matrix, headers);
+
+                let chord = d3.chord()
+                    .padAngle(.1)
+                    .sortSubgroups(d3.descending)
+
+                let innerRadius = Math.min(width, height) * .25,
+                    outerRadius = innerRadius * 1.1;             
+                let arc = d3.arc()
+                    .innerRadius(innerRadius)
+                    .outerRadius(outerRadius)
+
+                let ribbon = d3.ribbon()
+                    .radius(innerRadius);
+                
+                let chords = chord(matrix);
+
+                // 移动原点到画布中心
+                let chord_g = canvas2.append("g")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .attr("transform", "translate(" + (movex).toString() + "," + (movey).toString() + ")");
+
+                let chord_group = chord_g.append("g")
+                    .selectAll("g")
+                    .data(chords.groups)
+                    .enter().append("g");
+
+                var chord_svg = canvas2.append("svg")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .append("g")
+                    .attr("id", "circle")
+                    .attr("transform", "translate(" + (movex).toString()+ "," + (movey).toString() + ")");
+                
+                 chord_group.append("path")
+                    .style("fill", function(d){
+                        console.log(d)                        
+                        return d3.rgb(sphere_colors[selectedSpheres[d.index] * 3] * 255, sphere_colors[selectedSpheres[d.index] * 3 + 1] * 255, sphere_colors[selectedSpheres[d.index] * 3 + 2] * 255)})
+                    .style("stroke", function(d){return d3.rgb(sphere_colors[selectedSpheres[d.index] * 3] * 255, sphere_colors[selectedSpheres[d.index] * 3 + 1] * 255, sphere_colors[selectedSpheres[d.index] * 3 + 2] * 255)})
+                    .attr("d", arc)
+                    .attr("class", function(d) { return d.index; })
+                    .on("mouseover.fade", fade(.1))
+                    .on("mouseout.fade", fade(1))
+                    .on("mouseover.par", function(event, d) {
+                    d3.selectAll("tbody").selectAll("tr").remove();
+                    var pars = d3.select(".inbound");
+                    dispText(pars, objList[d.index].rulesFrom); 
+                    })
+                    .on("mouseover.par2", function(event, d) {
+                        d3.select(".inbound").select("#title").text("Rules to " + headers[d.index] + " from:");
+                        d3.select(".outbound").select("#title").text("Rules from " + headers[d.index] + " to:");
+                        var pars = d3.select(".outbound");
+                        dispText(pars, objList[d.index].rulesTo);
+                    });
+                
+                var ticks = chord_svg.append("g").selectAll("g")
+                    .data(chords.groups)
+                  .enter().append("g").selectAll("g")
+                    .data(groupTicks)
+                  .enter().append("g")
+                    .attr("transform", function(d) {
+                      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+                          + "translate(" + outerRadius + ",0)";
+                    });
+                
+                chord_svg.append("g").selectAll("text")
+                        .data(chords.groups)
+                    .enter()
+                    .append("sgv:text")
+                        .each(function(d){ d.angle = (d.startAngle + d.endAngle)/2;})
+                        .attr("dy", ".35em")
+                        .attr("class", "title")
+                        .attr("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+                        .attr("transform", function(d) {
+                        return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+                            + "translate(" + (outerRadius + 40) + ")"
+                            + (d.angle > Math.PI ? "rotate(180)" : "");
+                        })
+                        .text(function(d,i) {return textLabel(i+1);});
+                
+                ticks.append("line")
+                    .attr("x1", 1)
+                    .attr("y1", 0)
+                    .attr("x2", 5)
+                    .attr("y2", 0)
+                    .style("stroke", "#000");
+                
+                ticks.append("text")
+                    .attr("x", 8)
+                    .attr("dy", ".35em")
+                    .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180)translate(-16)" : null; })
+                    .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+                    .text(function(d) { return d.label; });
+
+                chord_svg.append("g")
+                    .attr("class", "chord")
+                    .selectAll("path")
+                    .data(chords)
+                    .enter().append("path")
+                    .attr("d", ribbon)
+                    .style("fill", function(d){
+                        console.log(d.target.index)
+                        return d3.rgb(sphere_colors[selectedSpheres[d.target.index] * 3] * 255, sphere_colors[selectedSpheres[d.target.index] * 3 + 1] * 255, sphere_colors[selectedSpheres[d.target.index] * 3 + 2] * 255)})
+                    .style("opacity", 1);
+                
+                chord_attr.push(chord_svg)
+                chord_attr.push(chord_g)
+                // Returns an array of tick angles and labels, given a group.
+                function groupTicks(d) {
+                var k = (d.endAngle - d.startAngle) / d.value;
+                return d3.range(0, d.value, 10).map(function(v, i) {
+                    return {
+                    angle: v * k + d.startAngle,
+                    label: i % 1 || i == 0 ? null : v
+                    };
+                });
+                }
+                
+                function groupName(d) {
+                var k = (d.endAngle + d.startAngle) / 2;
+                return k;
+                }
+                
+                // Returns an event handler for fading a given chord group.
+                function fade(opacity) {
+                return function(g, i) {
+                    chord_svg.selectAll(".chord path")
+                        .filter(function(d) { return d.source.index != i.index && d.target.index != i.index; })
+                    .transition()
+                        .style("opacity", opacity);
+                };
+                }
+            
+            })    
+            console.log("chord success")    
+        }
+
         function drawCanvas2()
         {
             if (canvas2rect.length == 0)
@@ -453,6 +672,11 @@
                     }
                     axis = [];
                     console.log(axis);
+
+                    for (let i = 0; i < chord_attr.length; i++) {
+                        chord_attr[i].remove();
+                    }
+                    chord_attr = [];
                 }
 
                 if (canvas2rect.length == 1)
@@ -467,6 +691,11 @@
                     axis = [];
                     print_1D(selectedSpheres[0]);
                     console.log(axis);
+
+                    for (let i = 0; i < chord_attr.length; i++) {
+                        chord_attr[i].remove();
+                    }
+                    chord_attr = [];
                 }
 
                 if (canvas2rect.length == 2)
@@ -487,6 +716,11 @@
                     print_2D(selectedSpheres[0],selectedSpheres[1]);
                     console.log(axis);
 
+                    for (let i = 0; i < chord_attr.length; i++) {
+                        chord_attr[i].remove();
+                    }
+                    chord_attr = [];
+
                 }
 
                 if (canvas2rect.length == 3)
@@ -498,12 +732,24 @@
                     for (let i = 0; i < axis.length; i++) {
                         axis[i].remove();
                     }
+
                     axis = [];
                     print_3D(selectedSpheres[0],selectedSpheres[1],selectedSpheres[2]);
+
+                    for (let i = 0; i < chord_attr.length; i++) {
+                        chord_attr[i].remove();
+                    }
+                    chord_attr = [];
                     
                 }
                 if (canvas2rect.length > 3)
                 {
+
+                    for (let i = 0; i < chord_attr.length; i++) {
+                        chord_attr[i].remove();
+                    }
+                    chord_attr = [];
+
                     for (let i = 0; i < points_3D.length; i++) {
                         points_3D[i].remove();
                     }
@@ -512,6 +758,7 @@
                         axis[i].remove();
                     }
                     axis = [];
+                    print_chord(selectedSpheres);
 
                 }
         }
