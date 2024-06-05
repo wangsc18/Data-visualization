@@ -622,8 +622,8 @@
                     }
 
                     let circle = canvas2.append('circle')
-                        .attr('cx', movex - zScale(newShowPointsx[i][2] * 0.5 * Math.sqrt(2)))
-                        .attr('cy', movey + zScale(newShowPointsx[i][2] * 0.5 * Math.sqrt(2)))
+                        .attr('cx', movex + xScale(newShowPointsx[i][0]))
+                        .attr('cy', movey)
                         .attr('r', 5)
                         .attr('fill', d3.rgb(sphere_colors[index3 * 3] * 255, sphere_colors[index3 * 3 + 1] * 255, sphere_colors[index3 * 3 + 2] * 255))
                         .attr('fill-opacity', ((newShowPointsx[i][2])));
@@ -649,8 +649,8 @@
                     }
 
                     let circle = canvas2.append('circle')
-                        .attr('cx', movex - zScale(newShowPointsy[i][2] * 0.5 * Math.sqrt(2)))
-                        .attr('cy', movey + zScale(newShowPointsy[i][2] * 0.5 * Math.sqrt(2)))
+                        .attr('cx', movex)
+                        .attr('cy', movey - movex + yScale(newShowPointsy[i][1]))
                         .attr('r', 5)
                         .attr('fill', d3.rgb(sphere_colors[index3 * 3] * 255, sphere_colors[index3 * 3 + 1] * 255, sphere_colors[index3 * 3 + 2] * 255))
                         .attr('fill-opacity', ((newShowPointsy[i][2])));
