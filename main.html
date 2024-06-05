@@ -76,13 +76,11 @@
         var canvas2rect = [];
         var canvas2recttext = [];
         var axis = [];
-<<<<<<< HEAD
+
         var points_3D = [];
         var points_2D = [];
         var points_1D = [];
         var chord_attr = []
-=======
->>>>>>> wangsc18-patch-1
 
         var points_x = [];
         var points_y = [];
@@ -699,7 +697,6 @@
             z_index = index3;
         }
 
-<<<<<<< HEAD
         function makeObjs(data, headings) {
             var intIndex,
                 objIntList = [];
@@ -877,6 +874,7 @@
                 
                 chord_attr.push(chord_svg)
                 chord_attr.push(chord_g)
+
                 // Returns an array of tick angles and labels, given a group.
                 function groupTicks(d) {
                 var k = (d.endAngle - d.startAngle) / d.value;
@@ -906,45 +904,7 @@
             })    
             console.log("chord success")    
         }
-
-        function drawCanvas2()
-        {
-            if (canvas2rect.length == 0)
-                {
-                    for (let i = 0; i < points_1D.length; i++) {
-                        points_1D[i].remove();
-                    }
-                    points_1D = [];
-                    for (let i = 0; i < axis.length; i++) {
-                        axis[i].remove();
-                    }
-                    axis = [];
-                    console.log(axis);
-
-                    for (let i = 0; i < chord_attr.length; i++) {
-                        chord_attr[i].remove();
-                    }
-                    chord_attr = [];
-                }
-
-                if (canvas2rect.length == 1)
-                {
-                    for (let i = 0; i < points_2D.length; i++) {
-                        points_2D[i].remove();
-                    }
-                    points_2D = [];
-                    for (let i = 0; i < axis.length; i++) {
-                        axis[i].remove();
-                    }
-                    axis = [];
-                    print_1D(selectedSpheres[0]);
-                    console.log(axis);
-
-                    for (let i = 0; i < chord_attr.length; i++) {
-                        chord_attr[i].remove();
-                    }
-                    chord_attr = [];
-=======
+            
         // 渲染右侧画布
         function drawCanvas2(addMark = false)
         {
@@ -957,87 +917,31 @@
                 for (let i = 0; i < axis.length; i++) {
                     axis[i][0].remove();
                     axis[i][1].remove();
->>>>>>> wangsc18-patch-1
                 }
                 axis = [];
                 // console.log(axis);
+
+                for (let i = 0; i < chord_attr.length; i++) {
+                    chord_attr[i].remove();
+                }
+                chord_attr = [];
             }
 
-<<<<<<< HEAD
-                if (canvas2rect.length == 2)
-                {
-                    for (let i = 0; i < points_3D.length; i++) {
-                        points_3D[i].remove();
-                    }
-                    points_3D = [];
-                    for (let i = 0; i<points_1D.length; i++)
-                    {
-                        points_1D[i].remove();
-                    }
-                    points_1D = [];
-                    for (let i = 0; i < axis.length; i++) {
-                        axis[i].remove();
-                    }
-                    axis = [];
-                    print_2D(selectedSpheres[0],selectedSpheres[1]);
-                    console.log(axis);
-
-                    for (let i = 0; i < chord_attr.length; i++) {
-                        chord_attr[i].remove();
-                    }
-                    chord_attr = [];
-
-=======
             if (canvas2rect.length == 1)
             {
                 for (let i = 0; i < axis.length; i++) {
                     axis[i][0].remove();
                     axis[i][1].remove();
->>>>>>> wangsc18-patch-1
                 }
                 axis = [];
                 print_1D(selectedSpheres[0]);
                 // console.log(axis);
+                for (let i = 0; i < chord_attr.length; i++) {
+                    chord_attr[i].remove();
+                }
+                chord_attr = [];
             }
 
-<<<<<<< HEAD
-                if (canvas2rect.length == 3)
-                {
-                    for (let i = 0; i < points_2D.length; i++) {
-                        points_2D[i].remove();
-                    }
-                    points_2D = [];
-                    for (let i = 0; i < axis.length; i++) {
-                        axis[i].remove();
-                    }
-
-                    axis = [];
-                    print_3D(selectedSpheres[0],selectedSpheres[1],selectedSpheres[2]);
-
-                    for (let i = 0; i < chord_attr.length; i++) {
-                        chord_attr[i].remove();
-                    }
-                    chord_attr = [];
-                    
-                }
-                if (canvas2rect.length > 3)
-                {
-
-                    for (let i = 0; i < chord_attr.length; i++) {
-                        chord_attr[i].remove();
-                    }
-                    chord_attr = [];
-
-                    for (let i = 0; i < points_3D.length; i++) {
-                        points_3D[i].remove();
-                    }
-                    points_3D = [];
-                    for (let i = 0; i < axis.length; i++) {
-                        axis[i].remove();
-                    }
-                    axis = [];
-                    print_chord(selectedSpheres);
-=======
             if (canvas2rect.length == 2)
             {
                 for (let i = 0; i < axis.length; i++) {
@@ -1047,8 +951,11 @@
                 axis = [];
                 print_2D(selectedSpheres[0],selectedSpheres[1]);
                 // console.log(axis);
->>>>>>> wangsc18-patch-1
 
+                for (let i = 0; i < chord_attr.length; i++) {
+                    chord_attr[i].remove();
+                }
+                chord_attr = [];
             }
 
             if (canvas2rect.length == 3)
@@ -1059,6 +966,11 @@
                 }
                 axis = [];
                 print_3D(selectedSpheres[0],selectedSpheres[1],selectedSpheres[2]);
+
+                for (let i = 0; i < chord_attr.length; i++) {
+                    chord_attr[i].remove();
+                }
+                chord_attr = [];
             }
 
             if (canvas2rect.length > 3)
@@ -1081,6 +993,13 @@
                 }
                 axis = [];
                 forth_index = selectedSpheres[3];
+
+                for (let i = 0; i < chord_attr.length; i++) {
+                    chord_attr[i].remove();
+                }
+                chord_attr = [];
+
+                print_chord(selectedSpheres);
             }
             console.log(points_x.length, points_y.length, points_z.length);
 
