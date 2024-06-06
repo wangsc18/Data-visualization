@@ -26,6 +26,12 @@
         padding: 10px 20px;
         z-index: 1000;
     }
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: white;
+        shape-rendering: crispEdges;
+    }
     .canvas-container {
         display: flex;
     }
@@ -97,6 +103,15 @@
         var maxIndices = [];
         var filename = []
 
+        canvas2.append('rect')
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('width', width1)
+            .attr('height', height1)
+            .attr('fill', 'black');
+
+
+
         // 读取最原始的数据
         d3.csv("CowenKeltnerEmotionalVideos.csv").then(function(data) {
             data.forEach(function(d) {
@@ -121,6 +136,11 @@
         })
         // console.log(initial_points);
 
+        function cal_new_opacity(opacity)
+        {
+            return opacity * 0.5 + 0.4;
+        }
+
         function print_1D(index1)
         {
           show_points = [];
@@ -140,11 +160,15 @@
             // 创建x轴
             let xAxis = d3.axisBottom(xScale);
             let xAxisG = canvas2.append("g")
+                .attr('class', 'axis')
                 .attr("transform", "translate(" + movex.toString() + "," + movey.toString() + ") rotate(0)")
                 .call(xAxis);
+            xAxisG.selectAll('.tick line').attr('stroke', 'white');
+            xAxisG.selectAll('.tick text').attr('fill', 'white');
             let xAxisText = canvas2.append("text")
                 .attr("transform", "translate(" + (movex + 420).toString() + "," + movey.toString() + ")")
-                .text(sphere_emotion[index1].toString());
+                .text(sphere_emotion[index1].toString())
+                .attr('fill', 'white');
             axis.push([xAxisG, xAxisText]);
 
             if (points_y.length > 0) {
@@ -165,7 +189,7 @@
                             .attr('cy', movey)
                             .attr('r', 5)
                             .attr('fill', d3.rgb(sphere_colors[index1 * 3] * 255, sphere_colors[index1 * 3 + 1] * 255, sphere_colors[index1 * 3 + 2] * 255))
-                            .attr('fill-opacity', (newShowPoints[i][0]));
+                            .attr('fill-opacity', cal_new_opacity(newShowPoints[i][0]));
                     }
                     points_y = [];
                     y_index = -1;
@@ -184,7 +208,7 @@
                             .attr('cy', movey)
                             .attr('r', 5)
                             .attr('fill', d3.rgb(sphere_colors[index1 * 3] * 255, sphere_colors[index1 * 3 + 1] * 255, sphere_colors[index1 * 3 + 2] * 255))
-                            .attr('fill-opacity', (newShowPoints[i][0]));
+                            .attr('fill-opacity', cal_new_opacity(newShowPoints[i][0]));
                         points_y[i].transition()
                             .delay(500)
                             .duration(500)
@@ -192,7 +216,7 @@
                             .attr('cy', movey)
                             .attr('r', 5)
                             .attr('fill', d3.rgb(sphere_colors[index1 * 3] * 255, sphere_colors[index1 * 3 + 1] * 255, sphere_colors[index1 * 3 + 2] * 255))
-                            .attr('fill-opacity', (newShowPoints[i][0]));
+                            .attr('fill-opacity', cal_new_opacity(newShowPoints[i][0]));
                     }
                     points_x = points_y;
                     points_y = [];
@@ -208,7 +232,7 @@
                         .attr('cy', movey)
                         .attr('r', 5)
                         .attr('fill', d3.rgb(sphere_colors[index1 * 3] * 255, sphere_colors[index1 * 3 + 1] * 255, sphere_colors[index1 * 3 + 2] * 255))
-                        .attr('fill-opacity', (newShowPoints[i][0]));
+                        .attr('fill-opacity', cal_new_opacity(newShowPoints[i][0]));
 
                     points_x.push(circle);
                 }
@@ -251,21 +275,29 @@
             // 创建x轴
             let xAxis = d3.axisBottom(xScale);
             let xAxisG = canvas2.append("g")
+                .attr('class', 'axis')
                 .attr("transform", "translate(" + movex.toString() + "," + movey.toString() + ") rotate(0)")
                 .call(xAxis);
+            xAxisG.selectAll('.tick line').attr('stroke', 'white');
+            xAxisG.selectAll('.tick text').attr('fill', 'white');
             let xAxisText = canvas2.append("text")
                 .attr("transform", "translate(" + (movex + 420).toString() + "," + movey.toString() + ")")
-                .text(sphere_emotion[index1].toString());
+                .text(sphere_emotion[index1].toString())
+                .attr('fill', 'white');
             axis.push([xAxisG, xAxisText]);
 
             // 创建y轴
             let yAxis = d3.axisLeft(yScale);
             let yAxisG = canvas2.append("g")
+                .attr("class", "axis")
                 .attr("transform",  "translate(" + movex.toString() + "," + (movey - movex).toString() + ") rotate(0)")
                 .call(yAxis);
+            yAxisG.selectAll('.tick line').attr('stroke', 'white');
+            yAxisG.selectAll('.tick text').attr('fill', 'white');
             let yAxisText = canvas2.append("text")
                 .attr("transform", "translate(" + movex.toString() + "," + (movey - movex - 20).toString() + ")")
-                .text(sphere_emotion[index2].toString());
+                .text(sphere_emotion[index2].toString())
+                .attr('fill', 'white');
             axis.push([yAxisG, yAxisText]);
 
             if (points_z.length > 0){
@@ -285,7 +317,7 @@
                             .attr('cx', xScale(newShowPointsx[i][0]) + movex)
                             .attr('cy', yScale(newShowPointsx[i][1]) + movey - movex)
                             .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                            .attr('fill-opacity', (newShowPointsx[i][0] + newShowPointsx[i][1]) / 2);
+                            .attr('fill-opacity', cal_new_opacity((newShowPointsx[i][0] + newShowPointsx[i][1]) / 2));
                     }
                     if (y_index == index2){
                         // 保留points_y，删除points_z，将y移回去
@@ -300,7 +332,7 @@
                                 .attr('cx', xScale(newShowPointsy[i][0]) + movex)
                                 .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                                 .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                                .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
+                                .attr('fill-opacity', cal_new_opacity((newShowPointsy[i][0] + newShowPointsy[i][1]) / 2));
                         }
                         for (let i = 0; i < points_z.length; i++) {
                             points_z[i].remove();
@@ -320,7 +352,7 @@
                                 .attr('cx', xScale(newShowPointsx[i][0]) + movex)
                                 .attr('cy', yScale(newShowPointsx[i][1]) + movey - movex)
                                 .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                                .attr('fill-opacity', (newShowPointsx[i][0] + newShowPointsx[i][1]) / 2);
+                                .attr('fill-opacity', cal_new_opacity((newShowPointsx[i][0] + newShowPointsx[i][1]) / 2));
                         }
                         // 保留points_z，删除points_y，将z移至y
                         for (let i = 0; i < points_y.length; i++) {
@@ -338,14 +370,14 @@
                                 .attr('cx', movex)
                                 .attr('cy', movey)
                                 .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                                .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
+                                .attr('fill-opacity', cal_new_opacity((newShowPointsy[i][0] + newShowPointsy[i][1]) / 2));
                             points_z[i].transition()
                                 .delay(500)
                                 .duration(500)
                                 .attr('cx', movex)
                                 .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                                 .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                                .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
+                                .attr('fill-opacity', cal_new_opacity((newShowPointsy[i][0] + newShowPointsy[i][1]) / 2));
                             
                             points_z[i].transition()
                                 .delay(1000)
@@ -353,7 +385,7 @@
                                 .attr('cx', xScale(newShowPointsy[i][0]) + movex)
                                 .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                                 .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                                .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
+                                .attr('fill-opacity', cal_new_opacity((newShowPointsy[i][0] + newShowPointsy[i][1]) / 2));
                         }
                         points_y = points_z;
                         y_index = index2;
@@ -375,14 +407,14 @@
                             .attr('cx', movex)
                             .attr('cy', movey)
                             .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                            .attr('fill-opacity', (newShowPointsx[i][0] + newShowPointsx[i][1]) / 2);
+                            .attr('fill-opacity', cal_new_opacity((newShowPointsx[i][0] + newShowPointsx[i][1]) / 2));
                         points_y[i].transition()
                             .delay(500)
                             .duration(500)
                             .attr('cx', xScale(newShowPointsx[i][0]) + movex)
                             .attr('cy', movey)
                             .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                            .attr('fill-opacity', (newShowPointsx[i][0] + newShowPointsx[i][1]) / 2);
+                            .attr('fill-opacity', cal_new_opacity((newShowPointsx[i][0] + newShowPointsx[i][1]) / 2));
                         
                         points_y[i].transition()
                             .delay(1000)
@@ -390,7 +422,7 @@
                             .attr('cx', xScale(newShowPointsx[i][0]) + movex)
                             .attr('cy', yScale(newShowPointsx[i][1]) + movey - movex)
                             .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                            .attr('fill-opacity', (newShowPointsx[i][0] + newShowPointsx[i][1]) / 2);
+                            .attr('fill-opacity', cal_new_opacity((newShowPointsx[i][0] + newShowPointsx[i][1]) / 2));
                     }
                     points_x = points_y;
 
@@ -405,14 +437,14 @@
                             .attr('cx', movex)
                             .attr('cy', movey)
                             .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                            .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
+                            .attr('fill-opacity', cal_new_opacity((newShowPointsy[i][0] + newShowPointsy[i][1]) / 2));
                         points_z[i].transition()
                             .delay(500)
                             .duration(500)
                             .attr('cx', movex)
                             .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                             .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                            .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
+                            .attr('fill-opacity', cal_new_opacity((newShowPointsy[i][0] + newShowPointsy[i][1]) / 2));
 
                         points_z[i].transition()
                             .delay(1000)
@@ -420,7 +452,7 @@
                             .attr('cx', xScale(newShowPointsy[i][0]) + movex)
                             .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                             .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                            .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
+                            .attr('fill-opacity', cal_new_opacity((newShowPointsy[i][0] + newShowPointsy[i][1]) / 2));
                     
                     }
                     points_y = points_z;
@@ -446,7 +478,7 @@
                         .attr('cx', xScale(newShowPointsx[i][0]) + movex)
                         .attr('cy', yScale(newShowPointsx[i][1]) + movey - movex)
                         .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                        .attr('fill-opacity', (newShowPointsx[i][0] + newShowPointsx[i][1]) / 2);
+                        .attr('fill-opacity', cal_new_opacity((newShowPointsx[i][0] + newShowPointsx[i][1]) / 2));
                 }
                 x_index = index1;
                 
@@ -462,13 +494,13 @@
                         .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex)
                         .attr('r', 5)
                         .attr('fill', d3.rgb(sphere_colors[index2 * 3] * 255, sphere_colors[index2 * 3 + 1] * 255, sphere_colors[index2 * 3 + 2] * 255))
-                        .attr('fill-opacity', (newShowPointsy[i][1]));
+                        .attr('fill-opacity', cal_new_opacity(newShowPointsy[i][1]));
                     
                     circle.transition()
                         .duration(1000)
                         .attr('cx', xScale(newShowPointsy[i][0]) + movex)
                         .attr('fill',d3.rgb(color_print[0] * 255, color_print[1] * 255, color_print[2] * 255))
-                        .attr('fill-opacity', (newShowPointsy[i][0] + newShowPointsy[i][1]) / 2);
+                        .attr('fill-opacity', cal_new_opacity((newShowPointsy[i][0] + newShowPointsy[i][1]) / 2));
 
                     points_y.push(circle);
 
@@ -527,31 +559,43 @@
             // 创建x轴
             let xAxis = d3.axisBottom(xScale);
             let xAxisG = canvas2.append("g")
+                .attr("class", 'axis')
                 .attr("transform", "translate(" + movex.toString() + "," + movey.toString() + ") rotate(0)")
                 .call(xAxis);
+            xAxisG.selectAll('.tick line').attr('stroke', 'white');
+            xAxisG.selectAll('.tick text').attr('fill', 'white');
             let xAxisText = canvas2.append("text")
                 .attr("transform", "translate(" + (movex + 420).toString() + "," + movey.toString() + ")")
-                .text(sphere_emotion[index1].toString());
+                .text(sphere_emotion[index1].toString())
+                .attr('fill', 'white');
             axis.push([xAxisG, xAxisText]);
 
             // 创建y轴
             let yAxis = d3.axisLeft(yScale);
             let yAxisG = canvas2.append("g")
+                .attr("class", "axis")
                 .attr("transform",  "translate(" + movex.toString() + "," + (movey - movex).toString() + ") rotate(0)")
                 .call(yAxis);
+            yAxisG.selectAll('.tick line').attr('stroke', 'white');
+            yAxisG.selectAll('.tick text').attr('fill', 'white');
             let yAxisText = canvas2.append("text")
                 .attr("transform", "translate(" + movex.toString() + "," + (movey - movex - 20).toString() + ")")
-                .text(sphere_emotion[index2].toString());
+                .text(sphere_emotion[index2].toString())
+                .attr('fill', 'white');
             axis.push([yAxisG, yAxisText]);
 
             // 创建z轴
             let zAxis = d3.axisRight(zScale);
             let zAxisG = canvas2.append("g")
+                .attr("class", "axis")
                 .attr("transform",  "translate(" + movex.toString() + "," + movey.toString() + ") rotate(45)")
                 .call(zAxis);
+            zAxisG.selectAll('.tick line').attr('stroke', 'white');
+            zAxisG.selectAll('.tick text').attr('fill', 'white');
             let zAxisText = canvas2.append("text")
                 .attr("transform", "translate(" + (movex - 250).toString() + "," + (movey + 250).toString() + ")")
-                .text(sphere_emotion[index3].toString());
+                .text(sphere_emotion[index3].toString())
+                .attr('fill', 'white');
             axis.push([zAxisG, zAxisText]);
 
             let theta = Math.PI / 4; // 旋转角度，可以根据需要调整
@@ -579,7 +623,7 @@
                         .attr('cx', xScale(newShowPointsx[i][0]) - zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2) + movex)
                         .attr('cy', yScale(newShowPointsx[i][1]) + movey - movex + zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2))
                         .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
-                        .attr('fill-opacity', ((newShowPointsx[i][0] + newShowPointsx[i][1] + newShowPointsx[i][2]) / 3))
+                        .attr('fill-opacity', cal_new_opacity(((newShowPointsx[i][0] + newShowPointsx[i][1] + newShowPointsx[i][2]) / 3)))
 
                 }
                 x_index = index1;
@@ -604,7 +648,7 @@
                         .attr('cx', xScale(newShowPointsy[i][0]) - zScale(newShowPointsy[i][2]) * 0.5 * Math.sqrt(2) + movex)
                         .attr('cy', yScale(newShowPointsy[i][1]) + movey - movex + zScale(newShowPointsy[i][2] * 0.5 * Math.sqrt(2)))
                         .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
-                        .attr('fill-opacity', ((newShowPointsy[i][0] + newShowPointsy[i][1] + newShowPointsy[i][2]) / 3))
+                        .attr('fill-opacity', cal_new_opacity(((newShowPointsy[i][0] + newShowPointsy[i][1] + newShowPointsy[i][2]) / 3)))
                     
                 }
                 y_index = index2;
@@ -625,15 +669,15 @@
                         .attr('cx', movex + xScale(newShowPointsx[i][0]))
                         .attr('cy', movey)
                         .attr('r', 5)
-                        .attr('fill', d3.rgb(sphere_colors[index3 * 3] * 255, sphere_colors[index3 * 3 + 1] * 255, sphere_colors[index3 * 3 + 2] * 255))
-                        .attr('fill-opacity', ((newShowPointsx[i][2])));
+                        .attr('fill', d3.rgb(sphere_colors[index1 * 3] * 255, sphere_colors[index1 * 3 + 1] * 255, sphere_colors[index1 * 3 + 2] * 255))
+                        .attr('fill-opacity', cal_new_opacity((newShowPointsx[i][2])));
                     
                     circle.transition()
                         .duration(1000)
                         .attr('cx', xScale(newShowPointsx[i][0]) - zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2) + movex)
                         .attr('cy', movey - movex + yScale(newShowPointsx[i][1]) + zScale(newShowPointsx[i][2]) * 0.5 * Math.sqrt(2))
                         .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
-                        .attr('fill-opacity', ((newShowPointsx[i][0] + newShowPointsx[i][1] + newShowPointsx[i][2]) / 3))
+                        .attr('fill-opacity', cal_new_opacity(((newShowPointsx[i][0] + newShowPointsx[i][1] + newShowPointsx[i][2]) / 3)))
                     
                     points_x.push(circle);
                 }
@@ -652,15 +696,15 @@
                         .attr('cx', movex)
                         .attr('cy', movey - movex + yScale(newShowPointsy[i][1]))
                         .attr('r', 5)
-                        .attr('fill', d3.rgb(sphere_colors[index3 * 3] * 255, sphere_colors[index3 * 3 + 1] * 255, sphere_colors[index3 * 3 + 2] * 255))
-                        .attr('fill-opacity', ((newShowPointsy[i][2])));
+                        .attr('fill', d3.rgb(sphere_colors[index2 * 3] * 255, sphere_colors[index2 * 3 + 1] * 255, sphere_colors[index2 * 3 + 2] * 255))
+                        .attr('fill-opacity', cal_new_opacity((newShowPointsy[i][2])));
                     
                     circle.transition()
                         .duration(1000)
                         .attr('cx', xScale(newShowPointsy[i][0]) - zScale(newShowPointsy[i][2]) * 0.5 * Math.sqrt(2) + movex)
                         .attr('cy', movey - movex + yScale(newShowPointsy[i][1]) + zScale(newShowPointsy[i][2]) * 0.5 * Math.sqrt(2))
                         .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
-                        .attr('fill-opacity', ((newShowPointsy[i][0] + newShowPointsy[i][1] + newShowPointsy[i][2]) / 3))
+                        .attr('fill-opacity', cal_new_opacity(((newShowPointsy[i][0] + newShowPointsy[i][1] + newShowPointsy[i][2]) / 3)))
                     
                     points_y.push(circle);
                 }
@@ -683,14 +727,14 @@
                     .attr('cy', movey + zScale(newShowPointsz[i][2] * 0.5 * Math.sqrt(2)))
                     .attr('r', 5)
                     .attr('fill', d3.rgb(sphere_colors[index3 * 3] * 255, sphere_colors[index3 * 3 + 1] * 255, sphere_colors[index3 * 3 + 2] * 255))
-                    .attr('fill-opacity', ((newShowPointsz[i][2])));
+                    .attr('fill-opacity', cal_new_opacity((newShowPointsz[i][2])));
                 
                 circle.transition()
                     .duration(1000)
                     .attr('cx', xScale(newShowPointsz[i][0]) - zScale(newShowPointsz[i][2]) * 0.5 * Math.sqrt(2) + movex)
                     .attr('cy', movey - movex + yScale(newShowPointsz[i][1]) + zScale(newShowPointsz[i][2]) * 0.5 * Math.sqrt(2))
                     .attr('fill',d3.rgb(color_print_3D[0] * 255, color_print_3D[1] * 255, color_print_3D[2] * 255))
-                    .attr('fill-opacity', ((newShowPointsz[i][0] + newShowPointsz[i][1] + newShowPointsz[i][2]) / 3))
+                    .attr('fill-opacity', cal_new_opacity(((newShowPointsz[i][0] + newShowPointsz[i][1] + newShowPointsz[i][2]) / 3)))
                 
                 points_z.push(circle);
             }
@@ -839,6 +883,7 @@
                         .each(function(d){ d.angle = (d.startAngle + d.endAngle)/2;})
                         .attr("dy", ".35em")
                         .attr("class", "title")
+                        .attr("fill", "white")
                         .attr("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
                         .attr("transform", function(d) {
                         return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
@@ -852,13 +897,14 @@
                     .attr("y1", 0)
                     .attr("x2", 5)
                     .attr("y2", 0)
-                    .style("stroke", "#000");
+                    .style("stroke", "white");
                 
                 ticks.append("text")
                     .attr("x", 8)
                     .attr("dy", ".35em")
                     .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180)translate(-16)" : null; })
                     .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+                    .attr("fill", "white")
                     .text(function(d) { return d.label; });
 
                 chord_svg.append("g")
@@ -1145,7 +1191,7 @@
                     .attr('width', rectWidth)
                     .attr('height', rectHeight)
                     .attr('fill', color)
-                    .attr('fill-opacity', scatter_alpha)
+                    .attr('fill-opacity', 0.8)
                     .on('click', function() {  // 添加这行来添加点击事件
                         
                         let index_rect = canvas2rect.indexOf(rect);
@@ -1173,7 +1219,7 @@
                     .attr('y', (selectedSpheres.length - 1) * 110 + 50)  // 修改这行来设置文本的y位置为矩形的中心
                     .text(sphere_emotion[index])
                     .attr('font-size', '20px')
-                    .attr('fill', 'black')
+                    .attr('fill', 'white')
                     .attr('text-anchor', 'middle')  // 添加这行来设置文本的水平对齐方式为居中
                     .attr('dominant-baseline', 'middle');  // 添加这行来设置文本的垂直对齐方式为居中
 
