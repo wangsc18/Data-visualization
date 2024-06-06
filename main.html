@@ -20,7 +20,7 @@
     <style>
     #toggleDragMode {
         position: absolute;
-        top: 100px;
+        top: 50px;
         left: 100px;
         transform: translate(-50%, -50%);
         padding: 10px 20px;
@@ -1009,7 +1009,7 @@
                     // 创建提示框并设置其内容为对应的文件名
                     let tooltip = d3.select("body").append("div")
                         .attr("class", "tooltip")
-                        .style("opacity", .9)
+                        .style("opacity", 1.0)
                         .style("left", (event.pageX + 10) + "px")
                         .style("top", (event.pageY - 10) + "px");
 
@@ -1031,7 +1031,7 @@
                     // 创建提示框并设置其内容为对应的文件名
                     let tooltip = d3.select("body").append("div")
                         .attr("class", "tooltip")
-                        .style("opacity", .9)
+                        .style("opacity", 1.0)
                         .style("left", (event.pageX + 10) + "px")
                         .style("top", (event.pageY - 10) + "px");
 
@@ -1324,7 +1324,16 @@
             d3.csv('tsne_data.csv'),
             d3.csv('tsne_centers.csv')
         ]).then(function([scatterData, sphereData]) {
-            var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+            // var colorScale = d3.scaleSequential()
+            //                 .domain([0, 30])
+            //                 .interpolator(d3.interpolateRainbow);
+            var colors = ['#687c3c', '#16919d', '#3c3861', '#a3606d', '#88ae1f', '#af014d', 
+                        '#bc98de', '#88043d', '#df4818', '#80ff5b', '#f0499a', '#5d2800', 
+                        '#6d6f13', '#cc5009', '#00001f', '#6f7cff', '#390a1e', '#7559b1', 
+                        '#bb336d', '#ff3b52', '#c61951', '#88a44b', '#9e443e', '#7a8683', 
+                        '#764500', '#482400', '#573a14', '#c62519', '#6ec30d', '#625f31'];
+            // 将三维坐标映射到RGB空间中上色
+            var colorScale = d3.scaleOrdinal(colors);
 
             // 处理球体数据
             sphere_positions = new Float32Array(sphereData.length * 3);
