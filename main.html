@@ -34,6 +34,7 @@
     }
     .canvas-container {
         display: flex;
+        margin-right: 10px;
     }
     .tooltip {
         position: absolute;
@@ -83,17 +84,19 @@
         var canvas2recttext = [];
         var axis = [];
 
-        var points_3D = [];
-        var points_2D = [];
-        var points_1D = [];
         var chord_attr = []
 
         var points_x = [];
         var points_y = [];
         var points_z = [];
+
         var file_list_x = [];
         var file_list_y = [];
         var file_list_z = [];
+        var coordinates_x = [];
+        var coordinates_y = [];
+        var coordinates_z = [];
+
         var x_index = -1;
         var y_index = -1;
         var z_index = -1;
@@ -145,6 +148,7 @@
         {
           show_points = [];
           file_list_x = [];
+          coordinates_x = [];
             for (let i = 0;i<maxIndices.length;i++){
                 if (maxIndices[i] == index1){
                     show_points.push(initial_points[i]);
@@ -183,6 +187,7 @@
                     // console.log(points_x.length);
                     // console.log(newShowPoints.length);
                     for (let i = 0; i < points_x.length; i++) {
+                        coordinates_x.push([newShowPoints[i][0]]);
                         points_x[i].transition()
                             .duration(1000)
                             .attr('cx', xScale(newShowPoints[i][0]) + movex)
@@ -202,6 +207,7 @@
                     // console.log(points_y.length);
                     // console.log(newShowPoints.length);
                     for (let i = 0; i < points_y.length; i++) {
+                        coordinates_x.push([newShowPoints[i][0]]);
                         points_y[i].transition()
                             .duration(500)
                             .attr('cx', movex)
@@ -227,6 +233,7 @@
             else {
                 // 说明是第一次绘制1D
                 for(let i = 0; i < newShowPoints.length; i++) {
+                    coordinates_x.push([newShowPoints[i][0]]);
                     let circle = canvas2.append('circle')
                         .attr('cx', xScale(newShowPoints[i][0]) + movex)
                         .attr('cy', movey)
@@ -246,6 +253,8 @@
             show_points_y = [];
             file_list_x = [];
             file_list_y = [];
+            coordinates_x = [];
+            coordinates_y = [];
             show_points = [];
 
             for (let i = 0; i<maxIndices.length;i++){
@@ -307,6 +316,7 @@
                     // 保留points_x，将x移回去
                     for(let i = 0; i < newShowPointsx.length; i++)
                     {
+                        coordinates_x.push([newShowPointsx[i][0], newShowPointsx[i][1]]);
                         let color_print = [];
                         color_print.push((sphere_colors[index1 * 3] * newShowPointsx[i][0] + sphere_colors[index2 * 3] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
                         color_print.push((sphere_colors[index1 * 3 + 1] * newShowPointsx[i][0] + sphere_colors[index2 * 3 + 1] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
@@ -322,6 +332,7 @@
                     if (y_index == index2){
                         // 保留points_y，删除points_z，将y移回去
                         for (let i = 0; i < newShowPointsy.length; i++) {
+                            coordinates_y.push([newShowPointsy[i][0], newShowPointsy[i][1]]);
                             let color_print = [];
                             color_print.push((sphere_colors[index1 * 3] * newShowPointsy[i][0] + sphere_colors[index2 * 3] * newShowPointsy[i][1])/(newShowPointsy[i][0] + newShowPointsy[i][1]));
                             color_print.push((sphere_colors[index1 * 3 + 1] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + 1] * newShowPointsy[i][1])/(newShowPointsy[i][0] + newShowPointsy[i][1]));
@@ -342,6 +353,7 @@
                         // 保留points_x，将x移回去
                         for(let i = 0; i < newShowPointsx.length; i++)
                         {
+                            coordinates_x.push([newShowPointsx[i][0], newShowPointsx[i][1]]);
                             let color_print = [];
                             color_print.push((sphere_colors[index1 * 3] * newShowPointsx[i][0] + sphere_colors[index2 * 3] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
                             color_print.push((sphere_colors[index1 * 3 + 1] * newShowPointsx[i][0] + sphere_colors[index2 * 3 + 1] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
@@ -359,6 +371,7 @@
                             points_y[i].remove();
                         }
                         for (let i = 0; i < newShowPointsy.length; i++) {
+                            coordinates_y.push([newShowPointsy[i][0], newShowPointsy[i][1]]);
                             let color_print = [];
                             color_print.push((sphere_colors[index1 * 3] * newShowPointsy[i][0] + sphere_colors[index2 * 3] * newShowPointsy[i][1])/(newShowPointsy[i][0] + newShowPointsy[i][1]));
                             color_print.push((sphere_colors[index1 * 3 + 1] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + 1] * newShowPointsy[i][1])/(newShowPointsy[i][0] + newShowPointsy[i][1]));
@@ -397,6 +410,7 @@
                         points_x[i].remove();
                     }
                     for (let i = 0; i < newShowPointsx.length; i++) {
+                        coordinates_x.push([newShowPointsx[i][0], newShowPointsx[i][1]]);
                         let color_print = [];
                         color_print.push((sphere_colors[index1 * 3] * newShowPointsx[i][0] + sphere_colors[index2 * 3] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
                         color_print.push((sphere_colors[index1 * 3 + 1] * newShowPointsx[i][0] + sphere_colors[index2 * 3 + 1] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
@@ -427,6 +441,7 @@
                     points_x = points_y;
 
                     for (let i = 0; i < newShowPointsy.length; i++){
+                        coordinates_y.push([newShowPointsy[i][0], newShowPointsy[i][1]]);
                         let color_print = [];
                         color_print.push((sphere_colors[index1 * 3] * newShowPointsy[i][0] + sphere_colors[index2 * 3] * newShowPointsy[i][1])/(newShowPointsy[i][0] + newShowPointsy[i][1]));
                         color_print.push((sphere_colors[index1 * 3 + 1] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + 1] * newShowPointsy[i][1])/(newShowPointsy[i][0] + newShowPointsy[i][1]));
@@ -468,6 +483,7 @@
                 // 说明是第一次绘制2D
                 for(let i = 0;i < newShowPointsx.length;i++)
                 {
+                    coordinates_x.push([newShowPointsx[i][0], newShowPointsx[i][1]]);
                     let color_print = [];
                     color_print.push((sphere_colors[index1 * 3] * newShowPointsx[i][0] + sphere_colors[index2 * 3] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
                     color_print.push((sphere_colors[index1 * 3 + 1] * newShowPointsx[i][0] + sphere_colors[index2 * 3 + 1] * newShowPointsx[i][1])/(newShowPointsx[i][0] + newShowPointsx[i][1]));
@@ -484,6 +500,7 @@
                 
                 for(let i = 0; i < newShowPointsy.length;i++)
                 {
+                    coordinates_y.push([newShowPointsy[i][0], newShowPointsy[i][1]]);
                     let color_print = [];
                     color_print.push((sphere_colors[index1 * 3] * newShowPointsy[i][0] + sphere_colors[index2 * 3] * newShowPointsy[i][1])/(newShowPointsy[i][0] + newShowPointsy[i][1]));
                     color_print.push((sphere_colors[index1 * 3 + 1] * newShowPointsy[i][0] + sphere_colors[index2 * 3 + 1] * newShowPointsy[i][1])/(newShowPointsy[i][0] + newShowPointsy[i][1]));
@@ -520,6 +537,9 @@
             file_list_x = [];
             file_list_y = [];
             file_list_z = [];
+            coordinates_x = [];
+            coordinates_y = [];
+            coordinates_z = [];
 
             for (let i = 0;i<maxIndices.length;i++){
                 if (maxIndices[i] == index1){
@@ -604,6 +624,7 @@
                 // 从2D升到3D
                 for (let i = 0; i<newShowPointsx.length; i++)
                 {
+                    coordinates_x.push([newShowPointsx[i][0], newShowPointsx[i][1], newShowPointsx[i][2]]);
                     let color_print_2D = [];
                     for (let j = 0; j < 3; j++) {
                         total_pos = newShowPointsx[i][0] + newShowPointsx[i][1];
@@ -630,6 +651,7 @@
                 
                 for(let i = 0; i<newShowPointsy.length; i++)
                 {
+                    coordinates_y.push([newShowPointsy[i][0], newShowPointsy[i][1], newShowPointsy[i][2]]);
                     let color_print_2D = [];
                     for (let j = 0; j < 3; j++) {
                         total_pos = newShowPointsy[i][0] + newShowPointsy[i][1];
@@ -658,6 +680,7 @@
                 // 从4类降到3类
                 for(let i=0; i<newShowPointsx.length; i++)
                 {
+                    coordinates_x.push([newShowPointsx[i][0], newShowPointsx[i][1], newShowPointsx[i][2]]);
                     let color_print_3D = [];
                     for (let j = 0; j < 3; j++) {
                         total_pos = newShowPointsx[i][0] + newShowPointsx[i][1] + newShowPointsx[i][2];
@@ -685,6 +708,7 @@
 
                 for(let i=0; i<newShowPointsy.length; i++)
                 {
+                    coordinates_y.push([newShowPointsy[i][0], newShowPointsy[i][1], newShowPointsy[i][2]]);
                     let color_print_3D = [];
                     for (let j = 0; j < 3; j++) {
                         total_pos = newShowPointsy[i][0] + newShowPointsy[i][1] + newShowPointsy[i][2];
@@ -715,6 +739,7 @@
 
             for(let i=0; i<newShowPointsz.length; i++)
             {
+                coordinates_z.push([newShowPointsz[i][0], newShowPointsz[i][1], newShowPointsz[i][2]]);
                 let color_print_3D = [];
                 for (let j = 0; j < 3; j++) {
                     total_pos = newShowPointsz[i][0] + newShowPointsz[i][1] + newShowPointsz[i][2];
@@ -971,10 +996,25 @@
                     chord_attr[i].remove();
                 }
                 chord_attr = [];
+                let img = canvas2.append('image')
+                    .attr('xlink:href', '封面.png')
+                    .attr('width', 1200)
+                    .attr('height', 1200)
+                    .attr('x', 0)
+                    .attr('y', 0)
+                    .style('opacity', 0)
+                    .transition()
+                    .duration(200)
+                    .style('opacity', 1);
             }
 
             if (canvas2rect.length == 1)
             {
+                canvas2.selectAll('image')
+                    .transition()
+                    .duration(200)
+                    .style('opacity', 0)
+                    .remove();
                 for (let i = 0; i < axis.length; i++) {
                     axis[i][0].remove();
                     axis[i][1].remove();
@@ -1052,14 +1092,26 @@
             // 鼠标悬停时显示标签
             for(let i = 0; i < points_x.length; i++) {
                 points_x[i].on("mouseover", function(d) {
+                    // 坐标排序
+                    let order = coordinates_x[i].map((value, index) => ({value, index}))
+                        .sort((a, b) => b.value - a.value)
+                        .map(obj => obj.index);
+
                     // 创建提示框并设置其内容为对应的文件名
                     let tooltip = d3.select("body").append("div")
                         .attr("class", "tooltip")
                         .style("opacity", 1.0)
-                        .style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY - 10) + "px");
+                        .style("left", (event.pageX + 20) + "px")
+                        .style("top", (event.pageY + 20) + "px");
 
-                    tooltip.append("p").text(sphere_emotion[selectedSpheres[0]] + ' ' + file_list_x[i]);
+                    let Texts = sphere_emotion[selectedSpheres[0]] + ' ' + file_list_x[i] + '<br>';
+                    for (let j = 0; j < order.length; j++) {
+                        Texts += Math.round(coordinates_x[i][order[j]] * 100) + '%' + sphere_emotion[selectedSpheres[order[j]]];
+                        if (j < coordinates_x[i].length - 1) {
+                            Texts += ' + ';
+                        }
+                    }
+                    tooltip.append("p").html(Texts);
 
                     // 创建video元素并设置其src属性为对应的视频文件的URL
                     tooltip.append("video")
@@ -1074,14 +1126,26 @@
             }
             for (let i = 0; i < points_y.length; i++) {
                 points_y[i].on("mouseover", function(d) {
+                    // 坐标排序
+                    let order = coordinates_y[i].map((value, index) => ({value, index}))
+                        .sort((a, b) => b.value - a.value)
+                        .map(obj => obj.index);
+
                     // 创建提示框并设置其内容为对应的文件名
                     let tooltip = d3.select("body").append("div")
                         .attr("class", "tooltip")
                         .style("opacity", 1.0)
-                        .style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY - 10) + "px");
+                        .style("left", (event.pageX + 20) + "px")
+                        .style("top", (event.pageY + 20) + "px");
 
-                    tooltip.append("p").text(sphere_emotion[selectedSpheres[1]] + ' ' + file_list_y[i]);
+                    let Texts = sphere_emotion[selectedSpheres[1]] + ' ' + file_list_y[i] + '<br>';
+                    for (let j = 0; j < order.length; j++) {
+                        Texts += Math.round(coordinates_y[i][order[j]] * 100) + '%' + sphere_emotion[selectedSpheres[order[j]]];
+                        if (j < coordinates_y[i].length - 1) {
+                            Texts += ' + ';
+                        }
+                    }
+                    tooltip.append("p").html(Texts);
 
                     // 创建video元素并设置其src属性为对应的视频文件的URL
                     tooltip.append("video")
@@ -1096,14 +1160,26 @@
             }
             for (let i = 0; i < points_z.length; i++) {
                 points_z[i].on("mouseover", function(d) {
+                    // 坐标排序
+                    let order = coordinates_z[i].map((value, index) => ({value, index}))
+                        .sort((a, b) => b.value - a.value)
+                        .map(obj => obj.index);
+
                     // 创建提示框并设置其内容为对应的文件名
                     let tooltip = d3.select("body").append("div")
                         .attr("class", "tooltip")
                         .style("opacity", .9)
-                        .style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY - 10) + "px");
+                        .style("left", (event.pageX + 20) + "px")
+                        .style("top", (event.pageY + 20) + "px");
 
-                    tooltip.append("p").text(sphere_emotion[selectedSpheres[2]] + ' ' + file_list_z[i]);
+                    let Texts = sphere_emotion[selectedSpheres[2]] + ' ' + file_list_z[i] + '<br>';
+                    for (let j = 0; j < order.length; j++) {
+                        Texts += Math.round(coordinates_z[i][order[j]] * 100) + '%' + sphere_emotion[selectedSpheres[order[j]]];
+                        if (j < coordinates_z[i].length - 1) {
+                            Texts += ' + ';
+                        }
+                    }
+                    tooltip.append("p").html(Texts);
 
                     // 创建video元素并设置其src属性为对应的视频文件的URL
                     tooltip.append("video")
@@ -1467,6 +1543,7 @@
 
             // 绘制
             draw();
+            drawCanvas2();
         });
 
         function draw() {
