@@ -856,7 +856,12 @@
                 let chord_g = canvas2.append("g")
                     .attr("width", width)
                     .attr("height", height)
-                    .attr("transform", "translate(" + (movex).toString() + "," + (movey).toString() + ")");
+                    .attr("transform", "translate(" + (movex).toString() + "," + (movey).toString() + ")")
+                    .style("opacity", 0);
+
+                chord_g.transition()
+                    .duration(500)
+                    .style("opacity", 1);
 
                 let chord_group = chord_g.append("g")
                     .selectAll("g")
@@ -869,6 +874,7 @@
                     .append("g")
                     .attr("id", "circle")
                     .attr("transform", "translate(" + (movex).toString()+ "," + (movey).toString() + ")");
+            
                 
                  chord_group.append("path")
                     .style("fill", function(d){
@@ -930,7 +936,11 @@
                     .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180)translate(-16)" : null; })
                     .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
                     .attr("fill", "white")
-                    .text(function(d) { return d.label; });
+                    .text(function(d) { return d.label; })
+                    .style("opacity", 0)
+                    .transition()
+                    .duration(500)
+                    .style("opacity", 1);
 
                 chord_svg.append("g")
                     .attr("class", "chord")
@@ -941,6 +951,9 @@
                     .style("fill", function(d){
                         console.log(d.target.index)
                         return d3.rgb(sphere_colors[selectedSpheres[d.target.index] * 3] * 255, sphere_colors[selectedSpheres[d.target.index] * 3 + 1] * 255, sphere_colors[selectedSpheres[d.target.index] * 3 + 2] * 255)})
+                    .style("opacity", 0)
+                    .transition()
+                    .duration(500)
                     .style("opacity", 1);
                 
                 chord_attr.push(chord_svg)
