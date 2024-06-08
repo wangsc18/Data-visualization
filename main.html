@@ -10,7 +10,7 @@
     <style>
         .chord path {
           fill-opacity: .67;
-          stroke: #000;
+          stroke: #ffffff;
           stroke-width: .5px;
         }
     </style>
@@ -43,10 +43,18 @@
         padding: 5px;
         border: 1px solid black;
     }
+    table.inbound, table.outbound {
+        border: 1px solid rgb(255, 255, 255);
+        width: 100%;
+        table-layout: auto;
+    }
     </style>
     <button id="toggleDragMode">Toggle Drag Mode</button>
     <div id="canvasContainer" class="canvas-container">
         <div class="graph columns eight"></div>
+
+        
+
     </div>
     <script>
     (function() {
@@ -790,24 +798,13 @@
             return objIntList;
         }
 
-        function dispText(divName, data) {
-            divName.select("table")
-            .select("tbody")
-            .selectAll("tr")
-            .data(data)
-            .enter()
-            .append("tr").style("display", function(d){ return d> 0 ? null : "none";})
-            .append("td").text(function(d, i) {return headers[i];})
-            divName.select("tbody").selectAll("tr").append("td").text(function(d) { return d;});
-        }
-
         function print_chord(selectedSpheres)
         {
             d3.csv("emotion_matrix.csv").then(function(data) {
                 // 将CSV文件转换为一个二维数组
                 let emotionMatrix = [];
                 let movex = 700;
-                let movey = 600;
+                let movey = 500;
 
                 for (let i = 0; i < data.length; i++) {
                     let row = [];
@@ -841,7 +838,7 @@
                     .padAngle(.1)
                     .sortSubgroups(d3.descending)
 
-                let innerRadius = Math.min(width, height) * .25,
+                let innerRadius = Math.min(width, height) * .2,
                     outerRadius = innerRadius * 1.1;             
                 let arc = d3.arc()
                     .innerRadius(innerRadius)
@@ -874,9 +871,23 @@
                     .append("g")
                     .attr("id", "circle")
                     .attr("transform", "translate(" + (movex).toString()+ "," + (movey).toString() + ")");
-            
                 
-                 chord_group.append("path")
+                var inbound = canvas2.append("foreignObject")
+                    .attr("transform", "translate(" + (movex-350).toString()+ "," + (movey+400).toString() + ")")
+                    .attr("class", "columns two inbound")
+                    .attr("width", 500) 
+                    .attr("height", 500) 
+                
+                
+                var outbound = canvas2.append("foreignObject")
+                    .attr("transform", "translate(" + (movex+50).toString()+ "," + (movey+400).toString() + ")")
+                    .attr("class", "columns two outbound")
+                    .attr("width", 500) 
+                    .attr("height", 500);
+
+     
+
+                chord_group.append("path")
                     .style("fill", function(d){
                         console.log(d)                        
                         return d3.rgb(sphere_colors[selectedSpheres[d.index] * 3] * 255, sphere_colors[selectedSpheres[d.index] * 3 + 1] * 255, sphere_colors[selectedSpheres[d.index] * 3 + 2] * 255)})
@@ -886,16 +897,20 @@
                     .on("mouseover.fade", fade(.1))
                     .on("mouseout.fade", fade(1))
                     .on("mouseover.par", function(event, d) {
-                    d3.selectAll("tbody").selectAll("tr").remove();
-                    var pars = d3.select(".inbound");
-                    dispText(pars, objList[d.index].rulesFrom); 
+                        dispText(inbound, objList[d.index].rulesFrom); 
+                        dispText(outbound, objList[d.index].rulesTo); 
+                        console.log('d3.select(".inbound").select(".title")')
+                        console.log(d3.select(".inbound").select(".title"))
+                        inbound.select(".title").style("color", "white").text("Chords to " + headers[d.index] + " from:");
+                        outbound.select(".title").style("color", "white").text("Chords from " + headers[d.index] + " to:");
                     })
-                    .on("mouseover.par2", function(event, d) {
-                        d3.select(".inbound").select("#title").text("Rules to " + headers[d.index] + " from:");
-                        d3.select(".outbound").select("#title").text("Rules from " + headers[d.index] + " to:");
-                        var pars = d3.select(".outbound");
-                        dispText(pars, objList[d.index].rulesTo);
+                    .on("mouseout.par", function(event, d) {
+                        inbound.selectAll("div").remove();
+                        console.log('inbound');
+                        console.log(inbound);
+                        outbound.selectAll("div").remove(); 
                     });
+                
                 
                 var ticks = chord_svg.append("g").selectAll("g")
                     .data(chords.groups)
@@ -977,13 +992,44 @@
                 
                 // Returns an event handler for fading a given chord group.
                 function fade(opacity) {
-                return function(g, i) {
-                    chord_svg.selectAll(".chord path")
-                        .filter(function(d) { return d.source.index != i.index && d.target.index != i.index; })
-                    .transition()
-                        .style("opacity", opacity);
-                };
+                    return function(g, i) {
+                        chord_svg.selectAll(".chord path")
+                            .filter(function(d) { return d.source.index != i.index && d.target.index != i.index; })
+                        .transition()
+                            .style("opacity", opacity);
+                    };
                 }
+                
+                function dispText(divName, data) {
+                    var table = divName.append("xhtml:div") 
+                        .append("table"); 
+                    var thead = table.append('thead').attr("class", "title");         
+                    var hrRow = thead.append('tr');
+                    hrRow.append('td')
+                    .attr('colspan', 2) // Span two columns
+                    .style('border-bottom', '1px solid white') // Add bottom border
+                    .style('padding', '0') // Remove padding
+                    .style('margin', '0'); // Remove margin
+            
+                       
+                    var tbody = table.append("tbody");
+                    var rows = tbody.selectAll("tr")
+                        .data(data)
+                        .enter()
+                        .append("tr").style("display", function(d){ return d > 0 ? null : "none"; });
+                
+                    rows.append("td")
+                        .style("color", "white") 
+                        .text(function(g, i) {
+                            return sphere_emotion[selectedSpheres[i]];
+                        });
+
+                    rows.append("td")
+                        .style("color", "white") 
+                        .text(function(d) { return d + '%'; });
+                }
+                
+                
             
             })    
             console.log("chord success")    
